@@ -2,9 +2,14 @@ package com.pedrorok.ami;
 
 import com.mojang.logging.LogUtils;
 import com.pedrorok.ami.config.Config;
+import com.pedrorok.ami.registry.ModActivities;
 import com.pedrorok.ami.registry.ModBlockEntities;
 import com.pedrorok.ami.registry.ModBlocks;
 import com.pedrorok.ami.registry.ModEntities;
+import com.pedrorok.ami.registry.ModItems;
+import com.pedrorok.ami.registry.ModMemoryModuleTypes;
+import com.pedrorok.ami.registry.ModSensorTypes;
+import com.pedrorok.ami.worldgen.RobotPartPlacedFeature;
 import net.kyori.adventure.platform.modcommon.MinecraftServerAudiences;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
@@ -29,6 +34,11 @@ public class ProjectAmi {
 	    ModBlocks.BLOCKS.register(modEventBus);
 	    ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
 		ModEntities.ENTITIES.register(modEventBus);
+		ModItems.ITEMS.register(modEventBus);
+		RobotPartPlacedFeature.PLACED_FEATURES.register(modEventBus);
+		ModActivities.ACTIVITIES.register(modEventBus);
+		ModMemoryModuleTypes.MEMORY_MODULES.register(modEventBus);
+		ModSensorTypes.SENSOR_TYPES.register(modEventBus);
 	 
 		NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> adventure = MinecraftServerAudiences.of(event.getServer()));
 	    NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> adventure = null);
