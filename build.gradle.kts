@@ -63,10 +63,18 @@ neoForge {
 
 repositories {
     mavenCentral()
+    maven("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/") {
+        name = "GeckoLib"
+        content {
+            includeGroup("software.bernie.geckolib")
+        }
+    }
     mavenLocal()
 }
 
 dependencies {
+    implementation("software.bernie.geckolib:geckolib-neoforge-1.21.1:4.8.2")
+
     jarJar(implementation("net.kyori:adventure-platform-neoforge:6.0.1")!!)
     jarJar(implementation("net.kyori:adventure-text-serializer-legacy:4.17.0")!!)
 
