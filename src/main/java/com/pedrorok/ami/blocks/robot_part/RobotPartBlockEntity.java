@@ -23,7 +23,7 @@ public class RobotPartBlockEntity extends BlockEntity {
 		this.setChanged();
 	}
 	
-	@Override
+	/*@Override
 	protected void saveAdditional(CompoundTag tag) {
 		super.saveAdditional(tag);
 		tag.putString("part_type", partType.getName());
@@ -41,5 +41,5 @@ public class RobotPartBlockEntity extends BlockEntity {
 				}
 			}
 		}
-	}
+	}*/
 }

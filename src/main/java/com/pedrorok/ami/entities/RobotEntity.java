@@ -13,9 +13,10 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
@@ -63,6 +64,12 @@ public class RobotEntity extends Mob implements GeoEntity {
 	
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+		controllers.add(new AnimationController<>(this, "controller", 0, this::predicate));
+	}
+
+	private <E extends GeoAnimatable> PlayState predicate(AnimationState<E> event) {
+		event.getController().setAnimation(RawAnimation.begin().thenLoop("animation.idle"));
+		return PlayState.CONTINUE;
 	}
 	
 	@Override

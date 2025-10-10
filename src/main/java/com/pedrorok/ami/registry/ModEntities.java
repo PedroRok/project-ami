@@ -18,7 +18,7 @@ public class ModEntities {
 		() -> EntityType.Builder.of(RobotEntity::new, net.minecraft.world.entity.MobCategory.CREATURE).sized(0.6F, 1.8F).build("robot"));
 	
 	@SubscribeEvent
-	public void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+	public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
 		event.put(ROBOT.get(), RobotEntity.createAttributes().build());
 	}
 }

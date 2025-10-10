@@ -22,4 +22,9 @@ public enum PartType implements StringRepresentable {
     public String toString() {
         return name;
     }
+
+    @Override
+    public String getSerializedName() {
+        return name;
+    }
 }
