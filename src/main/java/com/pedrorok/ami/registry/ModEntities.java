@@ -15,7 +15,7 @@ public class ModEntities {
 	public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, ProjectAmi.MOD_ID);
 	
 	public static final DeferredHolder<EntityType<?>, EntityType<RobotEntity>> ROBOT = ENTITIES.register("robot",
-		() -> EntityType.Builder.of(RobotEntity::new, net.minecraft.world.entity.MobCategory.CREATURE).sized(0.6F, 1.8F).build("robot"));
+		() -> EntityType.Builder.of(RobotEntity::new, net.minecraft.world.entity.MobCategory.CREATURE).sized(0.6F, 1.1F).build("robot"));
 	
 	@SubscribeEvent
 	public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {

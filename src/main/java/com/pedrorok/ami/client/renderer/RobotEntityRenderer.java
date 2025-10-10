@@ -63,6 +63,14 @@ public class RobotEntityRenderer extends GeoEntityRenderer<RobotEntity> {
 
         GeoModel<RobotEntity> model = getGeoModel();
         var faceBone = model.getBone("face").orElse(null);
+        var headBone = model.getBone("head").orElse(null);
+        if (headBone != null) {
+            float yaw = entity.getYRot();
+            float pitch = entity.getYRot();
+            headBone.setPosX((float) -Math.toRadians(yaw - entity.getYRot()));
+            headBone.setPosY((float) -Math.toRadians(pitch));
+        }
+
         Vec3 eyePos = entity.position().add(0, entity.getEyeHeight(), 0);
 
         Vec3 target = findClosestPlayerPos(entity.level(), eyePos); // substituir pela posição do objeto de interesse mais próximo

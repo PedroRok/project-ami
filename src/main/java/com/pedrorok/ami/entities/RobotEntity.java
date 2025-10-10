@@ -68,7 +68,10 @@ public class RobotEntity extends Mob implements GeoEntity {
 	}
 
 	private <E extends GeoAnimatable> PlayState predicate(AnimationState<E> event) {
-		event.getController().setAnimation(RawAnimation.begin().thenLoop("animation.idle"));
+		if (event.getController().getAnimationState().equals(AnimationController.State.STOPPED)) {
+			RawAnimation rawAnimation = RawAnimation.begin().thenLoop("animation.idle");
+			event.getController().setAnimation(rawAnimation);
+		}
 		return PlayState.CONTINUE;
 	}
 	
