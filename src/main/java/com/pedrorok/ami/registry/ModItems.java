@@ -1,7 +1,6 @@
 package com.pedrorok.ami.registry;
 
 import com.pedrorok.ami.ProjectAmi;
-import com.pedrorok.ami.blocks.robot_parts.PartType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;

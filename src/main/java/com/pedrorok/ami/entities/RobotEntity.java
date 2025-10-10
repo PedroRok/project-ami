@@ -11,8 +11,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.sensing.Sensor;
-import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -116,11 +114,6 @@ public class RobotEntity extends Mob implements GeoEntity {
 	
 	public boolean isLowEnergy() {
 		return energy.isLowEnergy();
-	}
-	
-	@Override
-	protected void defineSynchedData(net.minecraft.world.entity.SynchedEntityData.Builder builder) {
-		super.defineSynchedData(builder);
 	}
 	
 	@Override

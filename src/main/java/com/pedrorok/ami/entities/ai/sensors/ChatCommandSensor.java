@@ -1,6 +1,5 @@
 package com.pedrorok.ami.entities.ai.sensors;
 
-import com.pedrorok.ami.registry.ModMemoryModuleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;

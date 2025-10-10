@@ -2,7 +2,6 @@ package com.pedrorok.ami.system;
 
 import com.pedrorok.ami.entities.RobotEntity;
 import com.pedrorok.ami.registry.ModActivities;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;

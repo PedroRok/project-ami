@@ -1,6 +1,5 @@
 package com.pedrorok.ami.entities.ai.behaviors;
 
-import com.pedrorok.ami.registry.ModMemoryModuleTypes;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.PickaxeItem;
 
 import java.util.Map;
-import java.util.Optional;
 
 public class RequestToolBehavior extends Behavior<LivingEntity> {
     private int requestCooldown = 0;
