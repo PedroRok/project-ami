@@ -64,9 +64,18 @@ neoForge {
 repositories {
     mavenCentral()
     maven("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/") {
-        name = "GeckoLib"
         content {
             includeGroup("software.bernie.geckolib")
+        }
+    }
+    maven("https://cursemaven.com") {
+        content {
+            includeGroup("curse.maven")
+        }
+    }
+    maven("https://dl.cloudsmith.io/public/tslat/sbl/maven/") {
+        content {
+            includeGroup("net.tslat.smartbrainlib")
         }
     }
     mavenLocal()
@@ -74,12 +83,22 @@ repositories {
 
 dependencies {
     implementation("software.bernie.geckolib:geckolib-neoforge-1.21.1:4.8.2")
+    implementation("net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:1.16.11")
+    implementation("curse.maven:debug-utils-783008:6800027")
 
     jarJar(implementation("net.kyori:adventure-platform-neoforge:6.0.1")!!)
     jarJar(implementation("net.kyori:adventure-text-serializer-legacy:4.17.0")!!)
 
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
+}
+
+tasks.withType(JavaExec::class) {
+    javaLauncher = javaToolchains.launcherFor {
+        vendor = JvmVendorSpec.JETBRAINS
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    jvmArgs("-XX:+AllowEnhancedClassRedefinition", "-Dterminal.ansi=true")
 }
 
 val generateModMetadata = tasks.register<ProcessResources>("generateModMetadata") {

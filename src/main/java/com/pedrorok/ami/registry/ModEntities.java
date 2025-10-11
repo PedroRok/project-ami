@@ -1,7 +1,7 @@
 package com.pedrorok.ami.registry;
 
 import com.pedrorok.ami.ProjectAmi;
-import com.pedrorok.ami.entities.RobotEntity;
+import com.pedrorok.ami.entities.robot.RobotEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.neoforged.bus.api.SubscribeEvent;

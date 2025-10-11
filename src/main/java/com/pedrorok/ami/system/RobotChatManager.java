@@ -1,7 +1,6 @@
 package com.pedrorok.ami.system;
 
-import com.pedrorok.ami.entities.RobotEntity;
-import com.pedrorok.ami.registry.ModActivities;
+import com.pedrorok.ami.entities.robot.RobotEntity;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
@@ -41,24 +40,21 @@ public class RobotChatManager {
         if (!(robot.getMainHandItem().getItem() instanceof net.minecraft.world.item.PickaxeItem)) {
             addChatMessage(robot, "A.M.I.", "Preciso de uma picareta para minerar! Você pode me dar uma?");
             // Switch to requesting tool activity
-            robot.getBrain().setActiveActivityIfPossible(ModActivities.REQUESTING_TOOL.get());
             return;
         }
         
         // Check energy
-        if (robot.isOutOfEnergy()) {
+        /*if (robot.isOutOfEnergy()) {
             addChatMessage(robot, "A.M.I.", "Estou sem energia! Preciso de um Reactor Core para continuar.");
             return;
-        }
+        }*/
         
         // Start mining
         addChatMessage(robot, "A.M.I.", "Começando a minerar! Vou cavar alguns blocos para você.");
-        robot.getBrain().setActiveActivityIfPossible(ModActivities.MINING.get());
     }
     
     private static void executeFollowCommand(RobotEntity robot) {
         addChatMessage(robot, "A.M.I.", "Perfeito! Vou te seguir onde você for.");
-        robot.getBrain().setActiveActivityIfPossible(ModActivities.FOLLOW_PLAYER.get());
     }
     
     private static void executeWaitCommand(RobotEntity robot, String command) {
@@ -69,7 +65,6 @@ public class RobotChatManager {
         else if (command.contains("30")) duration = 600;
         
         addChatMessage(robot, "A.M.I.", "Entendido! Vou esperar aqui por " + (duration / 20) + " segundos.");
-        robot.getBrain().setActiveActivityIfPossible(ModActivities.WAITING.get());
     }
     
     private static void executeStopCommand(RobotEntity robot) {

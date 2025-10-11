@@ -1,7 +1,7 @@
 package com.pedrorok.ami.system;
 
 import com.pedrorok.ami.blocks.robot_parts.PartType;
-import com.pedrorok.ami.entities.RobotEntity;
+import com.pedrorok.ami.entities.robot.RobotEntity;
 import com.pedrorok.ami.registry.ModEntities;
 import com.pedrorok.ami.registry.ModItems;
 import net.minecraft.core.BlockPos;
@@ -54,10 +54,8 @@ public class RobotAssemblyManager {
 		RobotEntity robot = ModEntities.ROBOT.get().create(level);
 		if (robot != null) {
 			robot.moveTo(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
-			robot.setOwner(player.getUUID());
 			level.addFreshEntity(robot);
 			
-			// TODO: Open chat GUI with introduction message
 			return true;
 		}
 		

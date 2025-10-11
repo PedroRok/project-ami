@@ -1,10 +1,10 @@
-package com.pedrorok.ami.worldgen;
+package com.pedrorok.ami.registry;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-public class RobotPartPlacedFeature {
+public class ModFeatures {
 	public static final DeferredRegister<PlacedFeature> PLACED_FEATURES = DeferredRegister.create(Registries.PLACED_FEATURE, "project_ami");
 	
 	/*public static final DeferredHolder<PlacedFeature, PlacedFeature> ROBOT_PART_RARE = PLACED_FEATURES.register("robot_part_rare",
