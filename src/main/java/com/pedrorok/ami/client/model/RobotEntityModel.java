@@ -77,7 +77,7 @@ public class RobotEntityModel extends GeoModel<RobotEntity> {
 			float diffPitch = targetPitch - animatable.getXRot();
 			if (Math.abs(diffPitch) < 85) {
 				float facePitchOffset = headPitch - (float) Math.toRadians(diffPitch);
-				face.setPosY(facePitchOffset);
+				face.setPosY(-facePitchOffset);
 			}
 		}
 	}

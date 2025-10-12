@@ -1,13 +1,18 @@
 package com.pedrorok.ami.entities.robot;
 
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningTaskData;
+import com.pedrorok.ami.network.NetworkHandler;
+import com.pedrorok.ami.network.packets.OpenDialoguePacket;
 import com.pedrorok.ami.registry.ModMemoryModuleTypes;
+import com.pedrorok.ami.system.dialog.DialogueAnimationHelper;
+import com.pedrorok.ami.system.dialog.DialogueHandler;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.DebugPackets;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
@@ -56,12 +61,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarrier, GeoEntity {
+public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarrier, GeoEntity, DialogueAnimationHelper.DialogueAnimatable {
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	
 	@Getter private final RobotEnergy energy;
 	private final SimpleContainer inventory = new SimpleContainer(9);
-	
+
+	private String currentDialogueAnimation = null;
+
 	public RobotEntity(EntityType<? extends RobotEntity> entityType, Level level) {
 		super(entityType, level);
 		this.energy = new RobotEnergy(this);
@@ -81,6 +88,18 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 		this.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
 		this.setOwner(player);
 		this.getBrain().setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), new MiningTaskData());
+
+
+		if (!this.level().isClientSide && hand == InteractionHand.MAIN_HAND) {
+			if (player instanceof ServerPlayer serverPlayer) {
+				NetworkHandler.sendToPlayer(
+						new OpenDialoguePacket("greeting", this.getId()),
+						serverPlayer
+				);
+			}
+			return InteractionResult.SUCCESS;
+		}
+
 		return super.mobInteract(player, hand);
 	}
 	
@@ -193,18 +212,49 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	public AnimatableInstanceCache getAnimatableInstanceCache() {
 		return this.cache;
 	}
-	
+
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 		controllers.add(new AnimationController<>(this, "controller", 0, this::predicate));
+
+		controllers.add(new AnimationController<>(this, "dialogue_controller", 0, this::dialogueAnimController));
+	}
+
+	private <E extends GeoAnimatable> PlayState dialogueAnimController(AnimationState<E> state) {
+		if (currentDialogueAnimation != null) {
+			// Toca a animação de diálogo
+			state.getController().setAnimation(
+					RawAnimation.begin().thenPlay(currentDialogueAnimation)
+			);
+
+			// Reseta após a animação terminar
+			if (state.getController().hasAnimationFinished()) {
+				currentDialogueAnimation = null;
+			}
+
+			return PlayState.CONTINUE;
+		}
+
+		return PlayState.STOP;
 	}
 
 	private <E extends GeoAnimatable> PlayState predicate(AnimationState<E> event) {
+
+		if (currentDialogueAnimation != null) {
+			return PlayState.STOP;
+		}
+
 		if (event.getController().getAnimationState().equals(AnimationController.State.STOPPED)) {
 			RawAnimation rawAnimation = RawAnimation.begin().thenLoop("animation.idle");
 			event.getController().setAnimation(rawAnimation);
 		}
 		return PlayState.CONTINUE;
+	}
+
+	@Override
+	public void playDialogueAnimation(String animationName) {
+		this.currentDialogueAnimation = "animation." + animationName;
+		System.out.println("ExemploEntidade: Tocando animação de diálogo: " + animationName);
 	}
 	//endregion
 	

@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 @Mod(ProjectAmi.MOD_ID)
 public class ProjectAmi {
     public static final String MOD_ID = "project_ami";
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 	
 	private static volatile MinecraftServerAudiences adventure;
     
