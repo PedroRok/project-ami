@@ -25,12 +25,7 @@ public class ExampleCustomAction implements DialogueAction {
         ProjectAmi.LOGGER.info("CustomAction: {}", message);
         return true;
     }
-    
-    @Override
-    public String processText(String text, String command) {
-        // Remove o comando do texto
-        return text.replace("<" + command + ">", "");
-    }
+
     
     @Override
     public String getCommandPattern() {

@@ -1,6 +1,7 @@
 package com.pedrorok.ami.system.dialog.actions;
 
 import com.pedrorok.ami.ProjectAmi;
+import com.pedrorok.ami.client.gui.DialogueScreen;
 
 /**
  * Ação para fazer o diálogo aguardar um determinado tempo (baseado em ticks)
@@ -29,7 +30,14 @@ public class WaitAction implements DialogueAction {
         ProjectAmi.LOGGER.debug("WaitAction: Iniciando espera de {} ticks ({} segundos)", waitTicks, waitTicks / 20);
         return true;
     }
-    
+
+    @Override
+    public void process(DialogueScreen screen) {
+        screen.currentWaitAction = this;
+        screen.waitingForAction = true;
+        screen.hasActionsExecuting = true;
+    }
+
     /**
      * Atualiza o contador de ticks - deve ser chamado a cada tick
      * @return true se ainda está esperando, false se terminou
@@ -54,12 +62,6 @@ public class WaitAction implements DialogueAction {
      */
     public boolean isWaiting() {
         return isWaiting;
-    }
-    
-    @Override
-    public String processText(String text, String command) {
-        // Remove o comando do texto
-        return text.replace("<" + command + ">", "");
     }
     
     @Override

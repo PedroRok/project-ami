@@ -4,6 +4,7 @@ import com.pedrorok.ami.system.dialog.DialogueNode;
 import com.pedrorok.ami.system.dialog.actions.BreakLineAction;
 import com.pedrorok.ami.system.dialog.actions.DialogueAction;
 import com.pedrorok.ami.system.dialog.actions.WaitAction;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,6 +14,9 @@ import net.minecraft.world.entity.LivingEntity;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Rok, Pedro Lucas nmm. Created on 11/10/2025
  * @project project-ami
@@ -20,7 +24,7 @@ import org.joml.Vector3f;
 public class DialogueScreen extends Screen {
 
     private final String fullText;
-    private String currentText = "";
+    public String currentText = "";
     private int textIndex = 0;
     private int tickCounter = 0;
     private final int charsPerTick = 1;
@@ -37,15 +41,15 @@ public class DialogueScreen extends Screen {
     private final DialogueCallback callback;
     private final LivingEntity entity;
     private boolean isTransitioning = false;
-    private boolean hasActionsExecuting = false;
+    public boolean hasActionsExecuting = false;
     private int actionIndicatorTicks = 0;
     
     // Sistema sequencial de texto com ações
-    private java.util.List<DialogueNode.TextSegment> textSegments = new java.util.ArrayList<>();
-    private int currentSegmentIndex = 0;
-    private int currentSegmentTextIndex = 0;
-    private boolean waitingForAction = false;
-    private WaitAction currentWaitAction = null;
+    private List<DialogueNode.TextSegment> textSegments = new ArrayList<>();
+    public int currentSegmentIndex = 0;
+    public int currentSegmentTextIndex = 0;
+    public boolean waitingForAction = false;
+    public WaitAction currentWaitAction = null;
 
     public DialogueScreen(String dialogueText, String opt1, String opt2, String opt3, DialogueCallback callback, LivingEntity entity) {
         super(Component.literal("Dialogue"));
@@ -182,25 +186,10 @@ public class DialogueScreen extends Screen {
         if (currentSegment.hasAction()) {
             // Este segmento tem uma ação - executa
             DialogueAction.ActionContext context =
-                new DialogueAction.ActionContext(
-                    net.minecraft.client.Minecraft.getInstance().player, entity, "", 0);
+                new DialogueAction.ActionContext(Minecraft.getInstance().player, entity, "", 0);
             
             if (currentSegment.action.execute(context)) {
-                if (currentSegment.action instanceof WaitAction waitAction) {
-                    // É uma ação de espera - pausa a digitação
-                    currentWaitAction = waitAction;
-                    waitingForAction = true;
-                    hasActionsExecuting = true;
-                } else if (currentSegment.action instanceof BreakLineAction) {
-                    // É uma quebra de linha - adiciona \n ao texto e continua
-                    currentText += "\n";
-                    currentSegmentIndex++;
-                    currentSegmentTextIndex = 0;
-                } else {
-                    // Outras ações (como animações) - executa e continua
-                    currentSegmentIndex++;
-                    currentSegmentTextIndex = 0;
-                }
+                currentSegment.action.process(this);
             }
         } else if (currentSegment.hasText()) {
             // Este segmento tem texto - digita ele
@@ -253,7 +242,7 @@ public class DialogueScreen extends Screen {
             guiGraphics.fill(entityX - bgWidth/2 + 2, boxY + 2, entityX + bgWidth/2 - 2, boxY + boxHeight - 2, 0x55000000);
 
             // Debug visual
-            guiGraphics.drawString(this.font, "Entity: " + entity.getName().getString(), entityX - 40, boxY - 15, 0xFFFFFF, false);
+            guiGraphics.drawString(this.font, "Entity: Colocar aqui ID da AMI", entityX - 40, boxY - 15, 0xFFFFFF, false);
 
             // Renderiza a entidade olhando para o mouse
             try {
@@ -289,7 +278,7 @@ public class DialogueScreen extends Screen {
 
         // Indicador visual para ações sendo executadas
         if (hasActionsExecuting) {
-            String actionText = "Executando ações...";
+            String actionText = "Processando...";
             int actionX = boxX + 10;
             int actionY = boxY + boxHeight - 15;
             
@@ -392,8 +381,13 @@ public class DialogueScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!textComplete && button == 0) {
-            textIndex = fullText.length();
-            currentText = fullText;
+            StringBuilder builder = new StringBuilder();
+            for (DialogueNode.TextSegment textSegment : textSegments) {
+                builder.append(textSegment.text);
+            }
+            textIndex = builder.length();
+            currentText = builder.toString();
+
             textComplete = true;
             option1Button.visible = true;
             option2Button.visible = true;

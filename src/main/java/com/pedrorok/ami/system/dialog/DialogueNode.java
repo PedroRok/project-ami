@@ -26,66 +26,6 @@ public class DialogueNode {
     private DialogueNode nextNode1;
     private DialogueNode nextNode2;
     private DialogueNode nextNode3;
-
-    /**
-     * Processa o texto, extraindo comandos e preparando ações
-     */
-    public void processText(Player player, @Nullable LivingEntity robot) {
-        this.actions = new ArrayList<>();
-        String workingText = text;
-
-        // Primeiro, substitui o nome do jogador
-        workingText = workingText.replace("<player>", player.getName().getString());
-
-        // Constrói o padrão regex dinamicamente baseado nas ações registradas
-        String[] prefixes = DialogueActionRegistry.getRegisteredPrefixes();
-        StringBuilder patternBuilder = new StringBuilder("<(");
-        for (int i = 0; i < prefixes.length; i++) {
-            if (i > 0) patternBuilder.append("|");
-            if (prefixes[i].equals("anim_")) {
-                patternBuilder.append("anim_\\w+");
-            } else if (prefixes[i].equals("wait_")) {
-                patternBuilder.append("wait_\\d+");
-            } else if (!prefixes[i].equals("player")) { // Exclui player pois já foi processado
-                patternBuilder.append(prefixes[i]);
-            }
-        }
-        patternBuilder.append(")>");
-        
-        Pattern commandPattern = Pattern.compile(patternBuilder.toString());
-        Matcher matcher = commandPattern.matcher(workingText);
-
-        StringBuilder processedBuilder = new StringBuilder();
-        int lastEnd = 0;
-
-        while (matcher.find()) {
-            String command = matcher.group(1);
-            
-            // Adiciona o texto antes do comando
-            processedBuilder.append(workingText.substring(lastEnd, matcher.start()));
-
-            // Obtém a ação correspondente
-            DialogueAction action = DialogueActionRegistry.getAction(command);
-            if (action != null) {
-                // Processa o texto com a ação
-                String processedCommand = action.processText(workingText.substring(matcher.start(), matcher.end()), command);
-                processedBuilder.append(processedCommand);
-                
-                // Adiciona a ação à lista para execução posterior
-                actions.add(action);
-            } else {
-                // Se não encontrou ação, mantém o comando como texto
-                processedBuilder.append(matcher.group(0));
-            }
-
-            lastEnd = matcher.end();
-        }
-
-        // Adiciona o resto do texto
-        processedBuilder.append(workingText.substring(lastEnd));
-        
-        this.processedText = processedBuilder.toString();
-    }
     
     /**
      * Processa o texto de forma sequencial, criando uma lista de segmentos com ações
@@ -102,13 +42,7 @@ public class DialogueNode {
         StringBuilder patternBuilder = new StringBuilder("<(");
         for (int i = 0; i < prefixes.length; i++) {
             if (i > 0) patternBuilder.append("|");
-            if (prefixes[i].equals("anim_")) {
-                patternBuilder.append("anim_\\w+");
-            } else if (prefixes[i].equals("wait_")) {
-                patternBuilder.append("wait_\\d+");
-            } else if (!prefixes[i].equals("player")) { // Exclui player pois já foi processado
-                patternBuilder.append(prefixes[i]);
-            }
+            patternBuilder.append(DialogueActionRegistry.getAction(prefixes[i]).getCommandPattern());
         }
         patternBuilder.append(")>");
         

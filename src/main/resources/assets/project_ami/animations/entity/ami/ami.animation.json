@@ -67,6 +67,7 @@
 		},
 		"animation.happy": {
 			"animation_length": 3,
+			"loop": false,
 			"bones": {
 				"body": {
 					"rotation": {

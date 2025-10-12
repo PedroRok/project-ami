@@ -1,5 +1,6 @@
 package com.pedrorok.ami.system.dialog.actions;
 
+import com.pedrorok.ami.client.gui.DialogueScreen;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
@@ -18,13 +19,14 @@ public interface DialogueAction {
     boolean execute(ActionContext context);
     
     /**
-     * Processa o texto, removendo comandos e aplicando transformações
-     * @param text Texto original
-     * @param command Command que está sendo processado
-     * @return Texto processado
+     * Processa o texto do diálogo
+     * @param screen Tela de diálogo atual
      */
-    String processText(String text, String command);
-    
+    default void process(DialogueScreen screen) {
+        screen.currentSegmentIndex++;
+        screen.currentSegmentTextIndex = 0;
+    };
+
     /**
      * Retorna o padrão regex que esta ação reconhece
      * @return Pattern para reconhecer comandos desta ação

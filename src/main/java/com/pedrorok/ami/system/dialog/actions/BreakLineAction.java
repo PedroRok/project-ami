@@ -1,5 +1,7 @@
 package com.pedrorok.ami.system.dialog.actions;
 
+import com.pedrorok.ami.client.gui.DialogueScreen;
+
 /**
  * Ação para inserir quebra de linha no texto
  * @author Rok, Pedro Lucas nmm. Created on 11/10/2025
@@ -11,10 +13,12 @@ public class BreakLineAction implements DialogueAction {
     public boolean execute(ActionContext context) {
         return true;
     }
-    
+
     @Override
-    public String processText(String text, String command) {
-        return text.replace("<" + command + ">", "\n");
+    public void process(DialogueScreen screen) {
+        screen.currentText += "\n";
+        screen.currentSegmentIndex++;
+        screen.currentSegmentTextIndex = 0;
     }
     
     @Override

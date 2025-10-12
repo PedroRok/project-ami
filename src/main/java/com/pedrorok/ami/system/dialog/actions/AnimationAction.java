@@ -28,11 +28,6 @@ public class AnimationAction implements DialogueAction {
     }
     
     @Override
-    public String processText(String text, String command) {
-        return text.replace("<" + command + ">", "");
-    }
-    
-    @Override
     public String getCommandPattern() {
         return "anim_\\w+";
     }
