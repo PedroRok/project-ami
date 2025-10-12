@@ -222,14 +222,13 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 
 	private <E extends GeoAnimatable> PlayState dialogueAnimController(AnimationState<E> state) {
 		if (currentDialogueAnimation != null) {
-			// Toca a animação de diálogo
 			state.getController().setAnimation(
 					RawAnimation.begin().thenPlay(currentDialogueAnimation)
 			);
 
-			// Reseta após a animação terminar
 			if (state.getController().hasAnimationFinished()) {
 				currentDialogueAnimation = null;
+				state.getController().forceAnimationReset();
 			}
 
 			return PlayState.CONTINUE;
@@ -254,7 +253,6 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	@Override
 	public void playDialogueAnimation(String animationName) {
 		this.currentDialogueAnimation = "animation." + animationName;
-		System.out.println("ExemploEntidade: Tocando animação de diálogo: " + animationName);
 	}
 	//endregion
 	
