@@ -6,7 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,7 +25,7 @@ public class DialogueNode {
     private DialogueNode nextNode1;
     private DialogueNode nextNode2;
     private DialogueNode nextNode3;
-    
+
     /**
      * Processa o texto de forma sequencial, criando uma lista de segmentos com ações
      */
@@ -45,7 +44,7 @@ public class DialogueNode {
             patternBuilder.append(DialogueActionRegistry.getAction(prefixes[i]).getCommandPattern());
         }
         patternBuilder.append(")>");
-        
+
         Pattern commandPattern = Pattern.compile(patternBuilder.toString());
         Matcher matcher = commandPattern.matcher(workingText);
 
@@ -53,7 +52,7 @@ public class DialogueNode {
 
         while (matcher.find()) {
             String command = matcher.group(1);
-            
+
             // Adiciona o texto antes do comando como um segmento
             String textBefore = workingText.substring(lastEnd, matcher.start());
             if (!textBefore.isEmpty()) {
@@ -75,38 +74,31 @@ public class DialogueNode {
         if (!remainingText.isEmpty()) {
             segments.add(new TextSegment(remainingText, null));
         }
-        
+
         return segments;
     }
-    
+
     /**
      * Representa um segmento de texto com uma ação opcional
      */
-    public static class TextSegment {
-        public final String text;
-        public final DialogueAction action;
-        
-        public TextSegment(String text, DialogueAction action) {
-            this.text = text;
-            this.action = action;
-        }
-        
+    public record TextSegment(String text, DialogueAction action) {
+
         public boolean hasAction() {
             return action != null;
         }
-        
+
         public boolean hasText() {
             return text != null && !text.isEmpty();
         }
     }
-    
+
     /**
      * Executa todas as ações do diálogo
      */
     public void executeActions(Player player, @Nullable LivingEntity robot) {
         for (DialogueAction action : actions) {
             DialogueAction.ActionContext context = new DialogueAction.ActionContext(
-                player, robot, "", 0
+                    player, robot, "", 0
             );
             action.execute(context);
         }
@@ -119,7 +111,7 @@ public class DialogueNode {
         this.option3 = option3;
         this.processedText = text; // Texto processado inicia igual ao original
     }
-    
+
     /**
      * Obtém o texto processado (com comandos substituídos)
      */

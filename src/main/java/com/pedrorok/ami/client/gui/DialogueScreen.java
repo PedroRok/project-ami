@@ -1,7 +1,6 @@
 package com.pedrorok.ami.client.gui;
 
 import com.pedrorok.ami.system.dialog.DialogueNode;
-import com.pedrorok.ami.system.dialog.actions.BreakLineAction;
 import com.pedrorok.ami.system.dialog.actions.DialogueAction;
 import com.pedrorok.ami.system.dialog.actions.WaitAction;
 import net.minecraft.client.Minecraft;
@@ -188,12 +187,12 @@ public class DialogueScreen extends Screen {
             DialogueAction.ActionContext context =
                 new DialogueAction.ActionContext(Minecraft.getInstance().player, entity, "", 0);
             
-            if (currentSegment.action.execute(context)) {
-                currentSegment.action.process(this);
+            if (currentSegment.action().execute(context)) {
+                currentSegment.action().process(this);
             }
         } else if (currentSegment.hasText()) {
             // Este segmento tem texto - digita ele
-            String segmentText = currentSegment.text;
+            String segmentText = currentSegment.text();
             if (currentSegmentTextIndex < segmentText.length()) {
                 currentSegmentTextIndex++;
                 currentText += segmentText.substring(currentSegmentTextIndex - 1, currentSegmentTextIndex);
@@ -278,7 +277,7 @@ public class DialogueScreen extends Screen {
 
         // Indicador visual para ações sendo executadas
         if (hasActionsExecuting) {
-            String actionText = "Processando...";
+            String actionText = "...";
             int actionX = boxX + 10;
             int actionY = boxY + boxHeight - 15;
             
@@ -381,12 +380,18 @@ public class DialogueScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!textComplete && button == 0) {
-            StringBuilder builder = new StringBuilder();
+            currentText = "";
             for (DialogueNode.TextSegment textSegment : textSegments) {
-                builder.append(textSegment.text);
+                if (textSegment.hasAction() && textSegment.action().processWhenSkipped()) {
+                    DialogueAction.ActionContext context =
+                        new DialogueAction.ActionContext(Minecraft.getInstance().player, entity, "", 0);
+                    if (textSegment.action().execute(context)) {
+                        textSegment.action().process(this);
+                    }
+                }
+                currentText += textSegment.text();
             }
-            textIndex = builder.length();
-            currentText = builder.toString();
+            textIndex = currentText.length();
 
             textComplete = true;
             option1Button.visible = true;

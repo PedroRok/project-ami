@@ -18,8 +18,8 @@ public class DialogueActionRegistry {
         // Registra ações padrão
         registerAction("anim_", AnimationAction::new);
         registerAction("wait_", WaitAction::new);
-        registerAction("br", () -> new BreakLineAction());
-        registerAction("player", () -> new PlayerNameAction());
+        registerAction("br", BreakLineAction::new);
+        registerAction("player", PlayerNameAction::new);
         
         // Exemplo de ação customizada - descomente para usar
         // registerAction("custom_", ExampleCustomAction::new);

@@ -2,16 +2,22 @@ package com.pedrorok.ami.system.dialog.actions;
 
 import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.client.gui.DialogueScreen;
+import lombok.Getter;
 
 /**
  * Ação para fazer o diálogo aguardar um determinado tempo (baseado em ticks)
  * @author Rok, Pedro Lucas nmm. Created on 11/10/2025
  * @project project-ami
  */
+@Getter
 public class WaitAction implements DialogueAction {
     
     private final int waitTicks;
     private int currentTicks = 0;
+    /**
+     * -- GETTER --
+     *  Verifica se ainda está esperando
+     */
     private boolean isWaiting = false;
     
     public WaitAction() {
@@ -56,14 +62,12 @@ public class WaitAction implements DialogueAction {
         
         return true;
     }
-    
-    /**
-     * Verifica se ainda está esperando
-     */
-    public boolean isWaiting() {
-        return isWaiting;
+
+    @Override
+    public boolean processWhenSkipped() {
+        return false;
     }
-    
+
     @Override
     public String getCommandPattern() {
         return "wait_\\d+";
@@ -75,12 +79,5 @@ public class WaitAction implements DialogueAction {
     public static WaitAction forSeconds(int seconds) {
         return new WaitAction(seconds);
     }
-    
-    public int getWaitTicks() {
-        return waitTicks;
-    }
-    
-    public int getCurrentTicks() {
-        return currentTicks;
-    }
+
 }

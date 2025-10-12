@@ -32,7 +32,11 @@ public interface DialogueAction {
      * @return Pattern para reconhecer comandos desta ação
      */
     String getCommandPattern();
-    
+
+    default boolean processWhenSkipped() {
+        return true;
+    }
+
     /**
      * Contexto para execução de ações de diálogo
      */
