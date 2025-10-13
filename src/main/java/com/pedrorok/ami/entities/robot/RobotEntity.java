@@ -87,7 +87,8 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	protected InteractionResult mobInteract(Player player, InteractionHand hand) {
 		this.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
 		this.setOwner(player);
-		this.getBrain().setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), new MiningTaskData());
+		
+		
 
 
 		if (!this.level().isClientSide && hand == InteractionHand.MAIN_HAND) {

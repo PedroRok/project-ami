@@ -2,6 +2,7 @@ package com.pedrorok.ami;
 
 import com.mojang.logging.LogUtils;
 import com.pedrorok.ami.config.Config;
+import com.pedrorok.ami.registry.ModActivities;
 import com.pedrorok.ami.registry.ModBlockEntities;
 import com.pedrorok.ami.registry.ModBlocks;
 import com.pedrorok.ami.registry.ModEntities;
@@ -35,6 +36,7 @@ public class ProjectAmi {
 		ModEntities.ENTITIES.register(modEventBus);
 		ModItems.ITEMS.register(modEventBus);
 		ModFeatures.PLACED_FEATURES.register(modEventBus);
+		ModActivities.ACTIVITIES.register(modEventBus);
 		ModMemoryModuleTypes.MEMORY_MODULES.register(modEventBus);
 		ModSensorTypes.SENSOR_TYPES.register(modEventBus);
 	 
