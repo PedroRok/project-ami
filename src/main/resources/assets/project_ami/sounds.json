@@ -1,0 +1,6 @@
+{
+  "chat_char_sfx": {
+    "sounds": ["project_ami:chat_char_sfx"],
+    "subtitle": "subtitles.project_ami.chat"
+  }
+}

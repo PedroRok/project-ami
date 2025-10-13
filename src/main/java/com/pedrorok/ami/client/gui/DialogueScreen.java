@@ -1,5 +1,6 @@
 package com.pedrorok.ami.client.gui;
 
+import com.pedrorok.ami.registry.ModSounds;
 import com.pedrorok.ami.system.dialog.DialogueNode;
 import com.pedrorok.ami.system.dialog.actions.DialogueAction;
 import com.pedrorok.ami.system.dialog.actions.WaitAction;
@@ -8,8 +9,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
+import net.neoforged.fml.common.Mod;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -191,6 +195,8 @@ public class DialogueScreen extends Screen {
                 currentSegment.action().process(this);
             }
         } else if (currentSegment.hasText()) {
+            if (Minecraft.getInstance().player.tickCount % 2 == 0)
+                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.CHAT_SFX.get(), 1f));
             // Este segmento tem texto - digita ele
             String segmentText = currentSegment.text();
             if (currentSegmentTextIndex < segmentText.length()) {
