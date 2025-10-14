@@ -246,9 +246,8 @@ public class ExecuteMiningPlan extends ExtendedBehaviour<RobotEntity> {
         
         // Está perto E tem LoS - começar a quebrar
         breakingProgress++;
-        
-        if (breakingProgress % 5 == 0) {
-            robot.swing(robot.getUsedItemHand());
+
+        if (breakingProgress == BREAK_TIME - 8) {
             PacketDistributor.sendToPlayersTrackingEntity(robot, new PlayAnimationPacket("use-tool", robot.getId()));
         }
         

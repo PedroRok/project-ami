@@ -316,10 +316,8 @@ public class DialogueScreen extends Screen {
 
         // Aplica as rotações
         entity.yBodyRot = 180.0F + yRotation * 20.0F;
-        entity.setYRot(180.0F + yRotation * 40.0F);
         entity.setXRot(-xRotation * 20.0F);
-        entity.yHeadRot = entity.getYRot();
-        entity.yHeadRotO = entity.getYRot();
+        entity.yHeadRot = 180.0F + yRotation * 20.0F;
 
         // Renderiza a entidade
         Vector3f vector3f = new Vector3f(0.0F, entity.getBbHeight() / 2.0F + 0.0625F, 0.0F);
