@@ -90,7 +90,7 @@ public class DialogueScreen extends Screen {
         int buttonWidth = 200;
         int buttonHeight = 20;
         int centerX = this.width / 2;
-        int buttonY = this.height / 2 + 60;
+        int buttonY = this.height / 2 + 45;
 
         this.option1Button = Button.builder(Component.literal(option1Text), button -> {
             if (!isTransitioning && callback != null) {
@@ -230,9 +230,9 @@ public class DialogueScreen extends Screen {
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        int boxWidth = 300;
+        int boxWidth = 250;
         int boxHeight = 100;
-        int boxX = (this.width - boxWidth) / 2;
+        int boxX = (this.width - boxWidth) / 2 + 53;
         int boxY = (this.height - boxHeight) / 2 - 40;
 
         // Renderiza a entidade do lado esquerdo se existir
