@@ -6,6 +6,7 @@ import com.pedrorok.ami.entities.robot.behaviors.mining.MiningUtils;
 import com.pedrorok.ami.entities.robot.tasks.base.TaskType;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningPlan;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningTaskData;
+import com.pedrorok.ami.network.packets.PlayAnimationPacket;
 import com.pedrorok.ami.pathfinding.mining.MiningPathPlan;
 import com.pedrorok.ami.registry.ModMemoryModuleTypes;
 import net.minecraft.core.BlockPos;
@@ -15,10 +16,12 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.item.DiggerItem;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.tslat.smartbrainlib.api.core.behaviour.ExtendedBehaviour;
 import net.tslat.smartbrainlib.object.MemoryTest;
 
 import com.mojang.datafixers.util.Pair;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
 
@@ -246,6 +249,7 @@ public class ExecuteMiningPlan extends ExtendedBehaviour<RobotEntity> {
         
         if (breakingProgress % 5 == 0) {
             robot.swing(robot.getUsedItemHand());
+            PacketDistributor.sendToPlayersTrackingEntity(robot, new PlayAnimationPacket("use-tool", robot.getId()));
         }
         
         if (breakingProgress >= BREAK_TIME) {

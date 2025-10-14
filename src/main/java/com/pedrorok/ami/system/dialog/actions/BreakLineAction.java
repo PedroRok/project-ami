@@ -26,3 +26,4 @@ public class BreakLineAction implements DialogueAction {
         return "br";
     }
 }
+

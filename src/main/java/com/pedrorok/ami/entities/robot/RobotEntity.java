@@ -171,7 +171,11 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 			this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
 		}
 	}
-	
+
+	public ItemStack getItemInMainHand() {
+		return this.getItemBySlot(EquipmentSlot.MAINHAND);
+	}
+
 	@Override
 	public @NotNull SimpleContainer getInventory() {
 		return this.inventory;
