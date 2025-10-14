@@ -132,17 +132,12 @@ public class RobotCommandHandler {
 		// Create mining task with correct startPos
 		MiningTaskData taskData = new MiningTaskData(direction, blocks, pattern, startPos);
 		
-		// 🆕 AJUSTAR TOTAL BLOCKS PARA PADRÕES DE TÚNEL
-		if (pattern == MiningTaskData.MiningPattern.TUNNEL_2X1) {
-			// Túnel 2x1: cada "bloco" na verdade são 2 blocos (linha principal + superior)
-			taskData.setTotalBlocks(blocks * 2);
-		} else if (pattern == MiningTaskData.MiningPattern.TUNNEL_3X3) {
-			// Túnel 3x3: cada "bloco" na verdade são 9 blocos (padrão 3x3)
-			taskData.setTotalBlocks(blocks * 9);
-		}
+		// TODO: Ajustar total blocks para padrões de túnel se necessário
+		// Por enquanto, usar o valor padrão do construtor
 		
-		robot.getBrain().setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), taskData);
-		robot.getBrain().setActiveActivityIfPossible(ModActivities.MINING.get());
+			robot.getBrain().setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), taskData);
+			// Ativar atividade MINING para que os behaviors sejam executados
+			robot.getBrain().setActiveActivityIfPossible(ModActivities.MINING.get());
 		
 		ProjectAmi.LOGGER.info("=== TASK CRIADA COM SUCESSO ===");
 		

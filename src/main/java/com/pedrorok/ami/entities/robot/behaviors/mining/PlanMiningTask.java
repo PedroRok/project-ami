@@ -5,6 +5,8 @@ import com.pedrorok.ami.entities.robot.RobotEntity;
 import com.pedrorok.ami.entities.robot.tasks.base.TaskType;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningPlan;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningTaskData;
+import com.pedrorok.ami.pathfinding.mining.MiningPathfinder;
+import com.pedrorok.ami.pathfinding.mining.MiningPathPlan;
 import com.pedrorok.ami.registry.ModMemoryModuleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -66,8 +68,9 @@ public class PlanMiningTask extends ExtendedBehaviour<RobotEntity> {
                     ProjectAmi.LOGGER.info("[PlanMiningTask] Criando plano para task: direction={}, blocks={}, pattern={}", 
                         miningTask.getDirection(), miningTask.getTotalBlocks(), miningTask.getPattern());
                     
-                    // 1. Criar plano de mineração
-                    MiningPlan plan = MiningPlan.createFromTask(miningTask, level);
+                    // 1. Criar plano de mineração usando octree pathfinding
+                    MiningPathfinder pathfinder = new MiningPathfinder();
+                    MiningPathPlan plan = pathfinder.planMining(miningTask, level);
                     
                     // 2. Validar plano
                     if (!plan.isViable()) {

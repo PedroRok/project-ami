@@ -94,11 +94,11 @@ dependencies {
 }
 
 tasks.withType(JavaExec::class) {
-    //javaLauncher = javaToolchains.launcherFor {
-    //    vendor = JvmVendorSpec.JETBRAINS
-    //    languageVersion = JavaLanguageVersion.of(21)
-    //}
-    //jvmArgs("-XX:+AllowEnhancedClassRedefinition", "-Dterminal.ansi=true")
+    javaLauncher = javaToolchains.launcherFor {
+        vendor = JvmVendorSpec.JETBRAINS
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    jvmArgs("-XX:+AllowEnhancedClassRedefinition", "-Dterminal.ansi=true")
 }
 
 val generateModMetadata = tasks.register<ProcessResources>("generateModMetadata") {

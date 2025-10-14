@@ -58,12 +58,12 @@ public class MiningTaskData implements TaskData {
 	);
 	
 	private final Direction direction;
-	private int totalBlocks;
+	@Setter private int totalBlocks;
 	private int minedBlocks;
 	@Setter private BlockPos currentTarget;
 	private final MiningPattern pattern;
 	private final BlockPos startPos;
-	private MiningPhase phase = MiningPhase.PLANNING;
+	@Setter private MiningPhase phase = MiningPhase.PLANNING;
 	
 	public MiningTaskData(Direction direction, int totalBlocks, MiningPattern pattern, BlockPos startPos) {
 		this.direction = direction;
@@ -118,10 +118,6 @@ public class MiningTaskData implements TaskData {
 	public BlockPos getStartPos() { return startPos; }
 	public MiningPhase getPhase() { return phase; }
 	
-	// Setters
-	public void setCurrentTarget(BlockPos currentTarget) { this.currentTarget = currentTarget; }
-	public void setPhase(MiningPhase phase) { this.phase = phase; }
-	
 	// Business logic
 	public boolean isComplete() {
 		return minedBlocks >= totalBlocks;
@@ -129,10 +125,6 @@ public class MiningTaskData implements TaskData {
 	
 	public void incrementProgress() {
 		this.minedBlocks++;
-	}
-	
-	public void setTotalBlocks(int totalBlocks) {
-		this.totalBlocks = totalBlocks;
 	}
 	
 	public BlockPos calculateNextTarget(RobotEntity robot) {
@@ -150,9 +142,7 @@ public class MiningTaskData implements TaskData {
 			case BRANCH -> calculateBranchTarget(startPos.offset(offset));
 		};
 		
-		ProjectAmi.LOGGER.debug("[MiningTaskData] calculateNextTarget: minedBlocks={}, offset={}, result={}",
-			minedBlocks, offset, result);
-		
+		ProjectAmi.LOGGER.debug("[MiningTaskData] calculateNextTarget: minedBlocks={}, offset={}, result={}", minedBlocks, offset, result);
 		return result;
 	}
 	
@@ -209,22 +199,17 @@ public class MiningTaskData implements TaskData {
 	}
 	
 	public enum MiningPattern implements StringRepresentable {
-		STRAIGHT("straight"),
-		TUNNEL_2X1("tunnel2x1"),
-		TUNNEL_3X3("tunnel3x3"),
-		STAIRCASE("staircase"),
-		BRANCH("branch");
+		STRAIGHT,
+		TUNNEL_2X1,
+		TUNNEL_3X3,
+		STAIRCASE,
+		BRANCH;
 		
 		public static final String[] NAMES = { "STRAIGHT", "TUNNEL_2X1", "TUNNEL_3X3", "STAIRCASE", "BRANCH" };
-		private final String serializedName;
-		
-		MiningPattern(String serializedName) {
-			this.serializedName = serializedName;
-		}
 		
 		@Override
 		public @NotNull String getSerializedName() {
-			return serializedName;
+			return this.name();
 		}
 	}
 }

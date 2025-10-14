@@ -6,6 +6,7 @@ import com.pedrorok.ami.entities.robot.behaviors.mining.MiningUtils;
 import com.pedrorok.ami.entities.robot.tasks.base.TaskType;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningPlan;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningTaskData;
+import com.pedrorok.ami.pathfinding.mining.MiningPathPlan;
 import com.pedrorok.ami.registry.ModMemoryModuleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -73,6 +74,24 @@ public class ExecuteMiningPlan extends ExtendedBehaviour<RobotEntity> {
      * Retorna null se não houver mais blocos acessíveis.
      */
     private BlockPos findNextAccessibleBlock(RobotEntity robot, MiningPlan plan, ServerLevel level) {
+        // NOVO: Usar octree pathfinding se disponível
+        if (plan instanceof MiningPathPlan octreePlan) {
+            BlockPos nextBlock = octreePlan.getNextAccessibleBlock(robot);
+            if (nextBlock != null) {
+                ProjectAmi.LOGGER.info("[ExecuteMiningPlan] Octree pathfinding found accessible block: {}", nextBlock);
+                return nextBlock;
+            }
+        }
+        
+        // Fallback para implementação antiga
+        return findNextAccessibleBlockLegacy(robot, plan, level);
+    }
+    
+    /**
+     * Implementação legacy de busca de blocos acessíveis.
+     * Mantida como fallback para compatibilidade.
+     */
+    private BlockPos findNextAccessibleBlockLegacy(RobotEntity robot, MiningPlan plan, ServerLevel level) {
         int maxSkips = 10; // Evitar loop infinito
         int skips = 0;
         
@@ -236,6 +255,11 @@ public class ExecuteMiningPlan extends ExtendedBehaviour<RobotEntity> {
             
             // Consumir durabilidade da ferramenta
             consumeToolDurability(robot);
+            
+            // 🆕 Atualizar octree quando bloco é quebrado
+            if (plan instanceof MiningPathPlan octreePlan) {
+                octreePlan.updateOctree(currentTarget, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            }
             
             // 🆕 Marcar como completo APENAS se era um bloco da task original
             BlockPos originalTarget = plan.getCurrentBlock();

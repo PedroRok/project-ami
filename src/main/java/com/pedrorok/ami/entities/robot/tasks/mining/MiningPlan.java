@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
  * e obstáculos identificados antecipadamente.
  */
 public class MiningPlan {
+	
     private final List<BlockPos> blocksToMine; // Sequência exata de blocos
     private final List<BlockPos> obstaclesInPath; // Obstáculos na navegação
     private final int estimatedTime; // Estimativa em ticks

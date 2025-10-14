@@ -1,5 +1,6 @@
 package com.pedrorok.ami.entities.robot;
 
+import com.pedrorok.ami.entities.robot.tasks.base.TaskData;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningTaskData;
 import com.pedrorok.ami.network.NetworkHandler;
 import com.pedrorok.ami.network.packets.OpenDialoguePacket;
@@ -11,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -88,9 +90,6 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 		this.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
 		this.setOwner(player);
 		
-		
-
-
 		if (!this.level().isClientSide && hand == InteractionHand.MAIN_HAND) {
 			if (player instanceof ServerPlayer serverPlayer) {
 				NetworkHandler.sendToPlayer(
@@ -262,12 +261,27 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
 		tag.put("energy", this.energy.saveToNBT());
+		
+		this.brain.getMemory(MemoryModuleType.LIKED_PLAYER)
+			.ifPresent(uuid -> tag.putUUID("owner", uuid));
+		
+		this.brain.getMemory(ModMemoryModuleTypes.CURRENT_TASK.get())
+			.ifPresent(data -> tag.put("current_task", TaskData.DISPATCH_CODEC.encodeStart(NbtOps.INSTANCE, data).getOrThrow()));
 	}
 	
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
 		this.energy.loadFromNBT(tag.getCompound("energy"));
+		
+		if (tag.hasUUID("owner")) {
+			this.setOwner(tag.getUUID("owner"));
+		}
+		if (tag.contains("current_task")) {
+			TaskData.DISPATCH_CODEC.parse(NbtOps.INSTANCE, tag.getCompound("current_task"))
+				.resultOrPartial(Util.prefix("RobotEntity", System.err::println))
+				.ifPresent(data -> this.brain.setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), data));
+		}
 	}
 	//endregion
 }
