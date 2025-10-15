@@ -1,46 +1,91 @@
 package com.pedrorok.ami.pathfinding.pathfinder;
 
-import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.pathfinding.octree.NodeState;
 import com.pedrorok.ami.pathfinding.octree.OctreeConfig;
 import com.pedrorok.ami.pathfinding.octree.OctreeNode;
 import com.pedrorok.ami.pathfinding.octree.SpatialOctree;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
-import java.util.*;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Implementação do algoritmo A* para pathfinding sobre octree.
- * Otimiza a busca usando a estrutura hierárquica da octree.
- */
+@Slf4j
 public class OctreePathfinder {
     private final SpatialOctree octree;
+    private final LRUCache<PathCacheKey, PathResult> pathCache;
+    private final Map<BlockPos, OctreeNode> nodeCache;
     
     public OctreePathfinder(SpatialOctree octree) {
         this.octree = octree;
+        this.pathCache = new LRUCache<>(100);
+        this.nodeCache = new ConcurrentHashMap<>();
     }
     
-    /**
-     * Encontra o caminho mais eficiente entre dois pontos usando A*.
-     */
+    @Data
+    private static class PathCacheKey {
+        private final BlockPos start;
+        private final BlockPos goal;
+        private final int entityId;
+        
+        @Override
+        public boolean equals(Object o) {
+	        if (this == o) return true;
+	        if (!(o instanceof PathCacheKey key)) return false;
+	        return entityId == key.entityId
+	            && Objects.equals(start, key.start)
+	            && Objects.equals(goal, key.goal);
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(start, goal, entityId);
+        }
+    }
+    
     public PathResult findPath(BlockPos start, BlockPos goal, Entity entity) {
         if (start.equals(goal)) {
             return PathResult.success(Collections.singletonList(start));
         }
         
-        ProjectAmi.LOGGER.debug("[OctreePathfinder] Finding path from {} to {}", start, goal);
+        PathCacheKey cacheKey = new PathCacheKey(start, goal, entity != null ? entity.getId() : 0);
+        PathResult cached = pathCache.get(cacheKey);
+        if (cached != null) {
+            log.debug("Cache hit for path from {} to {}", start, goal);
+            return cached;
+        }
         
+        log.debug("Finding path from {} to {}", start, goal);
+        
+        PathResult result = findPathInternal(start, goal, entity);
+        pathCache.put(cacheKey, result);
+        
+        return result;
+    }
+    
+    private PathResult findPathInternal(BlockPos start, BlockPos goal, Entity entity) {
         PriorityQueue<PathNode> openSet = new PriorityQueue<>();
         Set<BlockPos> closedSet = new HashSet<>();
         Map<BlockPos, PathNode> openSetMap = new HashMap<>();
         
-        // Nó inicial
         if (!isPositionNavigable(start, entity)) {
             return PathResult.failure("Start position is not navigable");
         }
         
-        PathNode startPathNode = new PathNode(start, octree.findNode(start));
+        PathNode startPathNode = new PathNode(start, getCachedNode(start));
         startPathNode.gCost = 0;
         startPathNode.hCost = heuristic(start, goal);
         openSet.add(startPathNode);
@@ -54,104 +99,124 @@ public class OctreePathfinder {
             openSetMap.remove(current.position);
             
             if (current.position.equals(goal)) {
-                ProjectAmi.LOGGER.debug("[OctreePathfinder] Path found in {} iterations", iterations);
+                log.debug("Path found in {} iterations", iterations);
                 return PathResult.success(reconstructPath(current));
             }
             
             closedSet.add(current.position);
             
-            // Expandir vizinhos usando octree
-            List<OctreeNode> neighbors = octree.getNeighbors(current.octreeNode);
+            List<PathNode> neighbors = getJumpPointNeighbors(current, goal, entity);
             
-            for (OctreeNode neighbor : neighbors) {
-                BlockPos neighborPos = neighbor.getRegion().getCenter();
+            for (PathNode neighbor : neighbors) {
+                if (closedSet.contains(neighbor.position)) continue;
+                if (!isPositionNavigable(neighbor.position, entity)) continue;
                 
-                if (closedSet.contains(neighborPos)) {
-                    continue;
-                }
+                double tentativeG = current.gCost + calculateCost(current.position, neighbor.position, neighbor.octreeNode);
                 
-                // Verificar se a posição é navegável considerando o bounding box real da entidade
-                if (!isPositionNavigable(neighborPos, entity)) {
-                    continue;
-                }
+                PathNode existingNode = openSetMap.get(neighbor.position);
+                if (existingNode != null && tentativeG >= existingNode.gCost) continue;
                 
-                // Calcular custo do movimento
-                double tentativeG = current.gCost + 
-                    calculateCost(current.position, neighborPos, neighbor);
-                
-                // Verificar se já existe um caminho melhor para este nó
-                PathNode existingNode = openSetMap.get(neighborPos);
-                if (existingNode != null && tentativeG >= existingNode.gCost) {
-                    continue;
-                }
-                
-                // Criar ou atualizar nó
-                PathNode neighborPathNode = existingNode != null ? existingNode : 
-                    new PathNode(neighborPos, neighbor);
-                
+                PathNode neighborPathNode = existingNode != null ? existingNode : neighbor;
                 neighborPathNode.gCost = tentativeG;
-                neighborPathNode.hCost = heuristic(neighborPos, goal);
+                neighborPathNode.hCost = heuristic(neighbor.position, goal);
                 neighborPathNode.parent = current;
                 
                 if (existingNode == null) {
                     openSet.add(neighborPathNode);
-                    openSetMap.put(neighborPos, neighborPathNode);
+                    openSetMap.put(neighbor.position, neighborPathNode);
                 }
             }
             
             iterations++;
         }
-        
-        String reason = iterations >= maxIterations ? 
-            "Maximum iterations reached" : "No path found";
-        
-        ProjectAmi.LOGGER.warn("[OctreePathfinder] Pathfinding failed: {}", reason);
-        return PathResult.failure(reason);
+		
+	    String reason = iterations >= maxIterations ? "Maximum iterations reached" : "No path found";
+	    log.warn("Pathfinding failed: {}", reason);
+		
+	    return PathResult.failure(reason);
     }
     
-    /**
-     * Heurística para estimar distância até o objetivo.
-     * Usa distância Manhattan para ser consistente com movimento em grade.
-     */
+    private List<PathNode> getJumpPointNeighbors(PathNode current, BlockPos goal, Entity entity) {
+        List<PathNode> neighbors = new ArrayList<>();
+        
+        if (current.octreeNode == null) {
+            return neighbors;
+        }
+        
+        List<OctreeNode> octreeNeighbors = octree.getNeighbors(current.octreeNode);
+        
+        for (OctreeNode neighbor : octreeNeighbors) {
+            BlockPos neighborPos = neighbor.getRegion().getCenter();
+            
+            if (isJumpPoint(current.position, neighborPos, goal)) {
+                neighbors.add(new PathNode(neighborPos, neighbor));
+            }
+        }
+        
+        return neighbors;
+    }
+    
+    private boolean isJumpPoint(BlockPos from, BlockPos to, BlockPos goal) {
+        int dx = Integer.signum(to.getX() - from.getX());
+        int dy = Integer.signum(to.getY() - from.getY());
+        int dz = Integer.signum(to.getZ() - from.getZ());
+        
+        if (dx == 0 && dy == 0 && dz == 0) return false;
+        
+        if (dx != 0 && dy != 0 && dz != 0) return true;
+        if (dx != 0 && dy != 0) return true;
+        if (dx != 0 && dz != 0) return true;
+        if (dy != 0 && dz != 0) return true;
+        
+        return isForcedNeighbor(from, to, dx, dy, dz);
+    }
+    
+    private boolean isForcedNeighbor(BlockPos from, BlockPos to, int dx, int dy, int dz) {
+        OctreeNode fromNode = getCachedNode(from);
+        OctreeNode toNode = getCachedNode(to);
+        
+        if (fromNode == null || toNode == null) return false;
+        
+        if (fromNode.getState() == NodeState.SOLID || toNode.getState() == NodeState.SOLID) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private OctreeNode getCachedNode(BlockPos pos) {
+        return nodeCache.computeIfAbsent(pos, octree::findNode);
+    }
+    
     private double heuristic(BlockPos a, BlockPos b) {
         return Math.abs(a.getX() - b.getX()) + 
                Math.abs(a.getY() - b.getY()) + 
                Math.abs(a.getZ() - b.getZ());
     }
     
-    /**
-     * Calcula o custo de movimento entre dois pontos.
-     * Considera o estado do nó da octree e penalidades específicas.
-     */
     private double calculateCost(BlockPos from, BlockPos to, OctreeNode node) {
         double baseCost = from.distSqr(to);
         
-        // Penalizar nós MIXED (requerem navegação cuidadosa)
-        if (node.getState() == NodeState.MIXED) {
+        if (node != null && node.getState() == NodeState.MIXED) {
             baseCost *= OctreeConfig.MIXED_NODE_COST_MULTIPLIER;
         }
         
-        // Penalizar mudanças de altura (importante para mining)
         double heightDiff = Math.abs(to.getY() - from.getY());
         baseCost += heightDiff * OctreeConfig.HEIGHT_CHANGE_PENALTY;
         
-        // Penalizar movimentos diagonais (mais custosos)
         int dx = Math.abs(to.getX() - from.getX());
         int dy = Math.abs(to.getY() - from.getY());
         int dz = Math.abs(to.getZ() - from.getZ());
         
         if (dx > 0 && dy > 0 && dz > 0) {
-            baseCost *= 1.2; // Movimento diagonal 3D
+            baseCost *= 1.2;
         } else if ((dx > 0 && dy > 0) || (dx > 0 && dz > 0) || (dy > 0 && dz > 0)) {
-            baseCost *= 1.1; // Movimento diagonal 2D
+            baseCost *= 1.1;
         }
         
         return Math.sqrt(baseCost);
     }
     
-    /**
-     * Reconstrói o caminho a partir do nó final.
-     */
     private List<BlockPos> reconstructPath(PathNode goalNode) {
         List<BlockPos> path = new ArrayList<>();
         PathNode current = goalNode;
@@ -165,19 +230,14 @@ public class OctreePathfinder {
         return path;
     }
     
-    /**
-     * Verifica se existe um caminho direto entre dois pontos.
-     * Útil para validação rápida antes de executar A* completo.
-     */
     public boolean hasDirectPath(BlockPos start, BlockPos goal) {
-        OctreeNode startNode = octree.findNode(start);
-        OctreeNode goalNode = octree.findNode(goal);
+        OctreeNode startNode = getCachedNode(start);
+        OctreeNode goalNode = getCachedNode(goal);
         
         if (startNode == null || goalNode == null) {
             return false;
         }
         
-        // Verificar se são o mesmo nó ou vizinhos diretos
         if (startNode == goalNode) {
             return startNode.getState() != NodeState.SOLID;
         }
@@ -185,23 +245,17 @@ public class OctreePathfinder {
         return octree.areNodesReachable(startNode, goalNode);
     }
     
-    /**
-     * Encontra o nó navegável mais próximo a uma posição.
-     * Útil quando a posição de destino não é navegável.
-     */
     public BlockPos findNearestNavigablePosition(BlockPos target) {
-        OctreeNode targetNode = octree.findNode(target);
+        OctreeNode targetNode = getCachedNode(target);
         
         if (targetNode == null) {
             return target;
         }
         
-        // Se o nó é navegável, retornar centro
         if (targetNode.getState() != NodeState.SOLID) {
             return targetNode.getRegion().getCenter();
         }
         
-        // Buscar nós vizinhos navegáveis
         List<OctreeNode> neighbors = octree.getNeighbors(targetNode);
         
         for (OctreeNode neighbor : neighbors) {
@@ -210,58 +264,72 @@ public class OctreePathfinder {
             }
         }
         
-        // Fallback: retornar posição original
         return target;
     }
     
-    /**
-     * Obtém estatísticas do último pathfinding executado.
-     */
     public PathfindingStats getLastStats() {
         return new PathfindingStats();
     }
     
-    /**
-     * Verifica se uma posição é navegável para o robô.
-     * Usa o bounding box real da entidade para verificar colisões.
-     */
     public boolean isPositionNavigable(BlockPos pos, Entity entity) {
-        OctreeNode node = octree.findNode(pos);
+        OctreeNode node = getCachedNode(pos);
         if (node == null || node.getState() == NodeState.SOLID) {
             return false;
         }
         
-        // Usar o bounding box real da entidade para verificar colisões
-        net.minecraft.world.level.Level level = octree.getLevel();
+        Level level = octree.getLevel();
         
-        // Criar AABB na posição de destino usando as dimensões da entidade
-        net.minecraft.world.phys.AABB entityBounds = entity.getBoundingBox();
+        AABB entityBounds = entity.getBoundingBox();
         double width = entityBounds.getXsize();
         double height = entityBounds.getYsize();
         double depth = entityBounds.getZsize();
         
-        // Criar AABB na posição de destino
-        net.minecraft.world.phys.AABB targetBounds = new net.minecraft.world.phys.AABB(
-            pos.getX() + (1.0 - width) / 2.0,  // Centralizar horizontalmente
-            pos.getY(),                        // Altura base
-            pos.getZ() + (1.0 - depth) / 2.0,  // Centralizar horizontalmente
-            pos.getX() + (1.0 + width) / 2.0,  // Largura
-            pos.getY() + height,                // Altura total
-            pos.getZ() + (1.0 + depth) / 2.0    // Profundidade
+        AABB targetBounds = new AABB(
+            pos.getX() + (1.0 - width) / 2.0,
+            pos.getY(),
+            pos.getZ() + (1.0 - depth) / 2.0,
+            pos.getX() + (1.0 + width) / 2.0,
+            pos.getY() + height,
+            pos.getZ() + (1.0 + depth) / 2.0
         );
         
         return level.noCollision(null, targetBounds);
     }
     
+    public void clearCache() {
+        pathCache.clear();
+        nodeCache.clear();
+    }
+    
+    public void invalidateCache(BlockPos pos) {
+        pathCache.entrySet().removeIf(entry -> 
+            entry.getKey().getStart().equals(pos) || entry.getKey().getGoal().equals(pos));
+        nodeCache.remove(pos);
+    }
+	
+	private static class LRUCache<K, V> extends LinkedHashMap<K, V> {
+		private final int maxSize;
+		
+		public LRUCache(int maxSize) {
+			super(16, 0.75f, true);
+			this.maxSize = maxSize;
+		}
+		
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+			return size() > maxSize;
+		}
+	}
+    
+    @Data
     public static class PathfindingStats {
-        public int nodesExplored = 0;
-        public int iterations = 0;
-        public long executionTimeMs = 0;
-        
-        @Override
-        public String toString() {
-            return String.format("PathfindingStats[iterations=%d, time=%dms]", 
-                iterations, executionTimeMs);
-        }
+	    public int nodesExplored = 0;
+	    public int iterations = 0;
+	    public long executionTimeMs = 0;
+	    
+	    @Override
+	    public String toString() {
+		    return String.format("PathfindingStats[iterations=%d, time=%dms]", iterations, executionTimeMs);
+	    }
     }
 }

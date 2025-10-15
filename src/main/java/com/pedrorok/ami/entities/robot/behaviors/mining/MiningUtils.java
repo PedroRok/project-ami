@@ -1,6 +1,6 @@
 package com.pedrorok.ami.entities.robot.behaviors.mining;
 
-import com.pedrorok.ami.ProjectAmi;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -8,6 +8,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
+@Slf4j
 public class MiningUtils {
     /**
      * Checa se uma entidade tem linha de visão direta para um bloco
@@ -31,7 +32,7 @@ public class MiningUtils {
 		BlockPos hitPos = hit.getBlockPos();
 		boolean hasLoS = hitPos.equals(target);
 		
-		ProjectAmi.LOGGER.debug("[MiningUtils] findObstructingBlock: entity={}, target={}, hit={}, hasLoS={}", 
+		log.debug("[MiningUtils] findObstructingBlock: entity={}, target={}, hit={}, hasLoS={}", 
 			entity.blockPosition(), target, hitPos, hasLoS);
 		
 		if (hasLoS) {
@@ -42,7 +43,7 @@ public class MiningUtils {
 		// 🆕 CRIAR BLOCKPOS IMUTÁVEL para evitar bugs com MutableBlockPos
 		BlockPos immutableObstructor = hitPos.immutable();
 		
-		ProjectAmi.LOGGER.info("[MiningUtils] Obstrutor identificado: {} (imutável: {})", hitPos, immutableObstructor);
+		log.info("[MiningUtils] Obstrutor identificado: {} (imutável: {})", hitPos, immutableObstructor);
 		return immutableObstructor;
 	}
 

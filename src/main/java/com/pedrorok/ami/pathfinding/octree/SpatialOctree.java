@@ -1,6 +1,9 @@
 package com.pedrorok.ami.pathfinding.octree;
 
 import com.pedrorok.ami.ProjectAmi;
+import lombok.Data;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -8,46 +11,46 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * Estrutura principal da octree espacial.
- * Gerencia a subdivisão hierárquica do espaço 3D.
- */
+@Slf4j
 public class SpatialOctree {
     private OctreeNode root;
-    private final Level level;
+    @Getter private final Level level;
     private final int maxDepth;
+    private final Map<BlockPos, OctreeNode> nodeCache;
+    private final ConcurrentLinkedQueue<OctreeNode> nodePool;
+    private final Map<BlockPos, Boolean> dirtyNodes;
     
     public SpatialOctree(Level level) {
         this.level = level;
         this.maxDepth = OctreeConfig.MAX_DEPTH;
+        this.nodeCache = new ConcurrentHashMap<>();
+        this.nodePool = new ConcurrentLinkedQueue<>();
+        this.dirtyNodes = new ConcurrentHashMap<>();
     }
     
-    /**
-     * Constrói a octree para a região especificada.
-     */
     public void build(OctreeRegion bounds) {
-        ProjectAmi.LOGGER.info("[SpatialOctree] Building octree for region: {}", bounds);
+        log.info("Building octree for region: {}", bounds);
         
         long startTime = System.currentTimeMillis();
         root = buildRecursive(bounds, 0);
         long buildTime = System.currentTimeMillis() - startTime;
         
-        ProjectAmi.LOGGER.info("[SpatialOctree] Octree built in {}ms", buildTime);
+        log.info("Octree built in {}ms", buildTime);
     }
     
     private OctreeNode buildRecursive(OctreeRegion region, int depth) {
-        OctreeNode node = new OctreeNode(region, level);
+        OctreeNode node = getPooledNode(region);
         
-        // Determinar estado inicial
         node.calculateDensity();
         
-        // Critérios de parada
         if (depth >= maxDepth || !node.shouldSubdivide()) {
-            return node; // Leaf node
+            return node;
         }
         
-        // Subdividir recursivamente
         OctreeRegion[] octants = region.subdivide();
         node.setChildren(new OctreeNode[8]);
         
@@ -58,30 +61,53 @@ public class SpatialOctree {
         return node;
     }
     
-    /**
-     * Encontra o nó que contém a posição especificada.
-     */
+    private OctreeNode getPooledNode(OctreeRegion region) {
+        OctreeNode node = nodePool.poll();
+        if (node == null) {
+            node = new OctreeNode(region, level);
+        } else {
+            node.reset(region, level);
+        }
+        return node;
+    }
+    
     public OctreeNode findNode(BlockPos pos) {
+        OctreeNode cached = nodeCache.get(pos);
+        if (cached != null && !isDirty(pos)) {
+            return cached;
+        }
+        
         if (root == null) {
             return null;
         }
         
-        return root.findChild(pos);
+        OctreeNode found = root.findChild(pos);
+        if (found != null) {
+            nodeCache.put(pos, found);
+        }
+        
+        return found;
     }
     
-    /**
-     * Atualiza a octree após uma mudança no mundo.
-     */
     public void update(BlockPos pos, BlockState newState) {
         if (root != null) {
+            markDirty(pos);
             root.update(pos, newState);
         }
     }
     
-    /**
-     * Obtém todos os nós vizinhos de um nó específico.
-     * Vizinhos são nós adjacentes que podem ser navegados.
-     */
+    private void markDirty(BlockPos pos) {
+        dirtyNodes.put(pos, true);
+    }
+    
+    private boolean isDirty(BlockPos pos) {
+        return dirtyNodes.getOrDefault(pos, false);
+    }
+    
+    public void clearDirtyFlags() {
+        dirtyNodes.clear();
+    }
+    
     public List<OctreeNode> getNeighbors(OctreeNode node) {
         List<OctreeNode> neighbors = new ArrayList<>();
         
@@ -89,11 +115,9 @@ public class SpatialOctree {
             return neighbors;
         }
         
-        // Para leaf nodes, encontrar nós vizinhos na mesma profundidade
         if (node.isLeaf()) {
             neighbors.addAll(findLeafNeighbors(node));
         } else {
-            // Para internal nodes, usar filhos
             for (OctreeNode child : node.getChildren()) {
                 neighbors.addAll(getNeighbors(child));
             }
@@ -106,7 +130,6 @@ public class SpatialOctree {
         List<OctreeNode> neighbors = new ArrayList<>();
         OctreeRegion region = leafNode.getRegion();
         
-        // Verificar vizinhos em todas as 6 direções
         Direction[] directions = {
             Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST,
             Direction.UP, Direction.DOWN
@@ -125,9 +148,6 @@ public class SpatialOctree {
         return neighbors;
     }
     
-    /**
-     * Obtém todos os nós leaf da octree.
-     */
     public List<OctreeNode> getAllLeafNodes() {
         List<OctreeNode> leafNodes = new ArrayList<>();
         
@@ -148,27 +168,19 @@ public class SpatialOctree {
         }
     }
     
-    /**
-     * Verifica se dois nós são navegáveis entre si.
-     */
     public boolean areNodesReachable(OctreeNode from, OctreeNode to) {
         if (from == null || to == null) {
             return false;
         }
         
-        // Nós SOLID não são navegáveis
         if (from.getState() == NodeState.SOLID || to.getState() == NodeState.SOLID) {
             return false;
         }
         
-        // Verificar se são vizinhos diretos
         List<OctreeNode> neighbors = getNeighbors(from);
         return neighbors.contains(to);
     }
     
-    /**
-     * Calcula estatísticas da octree para debug.
-     */
     public OctreeStats getStats() {
         OctreeStats stats = new OctreeStats();
         
@@ -187,12 +199,11 @@ public class SpatialOctree {
             stats.leafNodes++;
             stats.totalVolume += node.getRegion().getVolume();
             
-        switch (node.getState()) {
-            case EMPTY -> stats.emptyNodes++;
-            case SOLID -> stats.solidNodes++;
-            case MIXED -> stats.mixedNodes++;
-            case UNKNOWN -> stats.mixedNodes++; // Treat unknown as mixed for stats
-        }
+	        switch (node.getState()) {
+	            case EMPTY -> stats.emptyNodes++;
+	            case SOLID -> stats.solidNodes++;
+	            case MIXED, UNKNOWN -> stats.mixedNodes++;
+	        }
         } else {
             stats.internalNodes++;
             for (OctreeNode child : node.getChildren()) {
@@ -200,14 +211,8 @@ public class SpatialOctree {
             }
         }
     }
-    
-    /**
-     * Obtém o nível do mundo associado a esta octree.
-     */
-    public Level getLevel() {
-        return level;
-    }
-    
+	
+	@Data
     public static class OctreeStats {
         public int totalNodes = 0;
         public int leafNodes = 0;

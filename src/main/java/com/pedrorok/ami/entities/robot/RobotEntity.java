@@ -1,9 +1,12 @@
 package com.pedrorok.ami.entities.robot;
 
+import com.pedrorok.ami.entities.robot.fsm.ActionContext;
+import com.pedrorok.ami.entities.robot.fsm.RobotActionStateMachine;
 import com.pedrorok.ami.entities.robot.tasks.base.TaskData;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningTaskData;
 import com.pedrorok.ami.network.NetworkHandler;
 import com.pedrorok.ami.network.packets.OpenDialoguePacket;
+import com.pedrorok.ami.pathfinding.mining.MiningPathPlan;
 import com.pedrorok.ami.registry.ModMemoryModuleTypes;
 import com.pedrorok.ami.system.dialog.DialogueAnimationHelper;
 import com.pedrorok.ami.system.dialog.DialogueHandler;
@@ -69,16 +72,16 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	
 	@Getter private final RobotEnergy energy;
 	private final SimpleContainer inventory = new SimpleContainer(9);
-
+	@Getter private final RobotActionStateMachine actionStateMachine;
+	
 	private String currentDialogueAnimation = null;
-	@Getter
-	private String currentMood = null;
-	@Getter
-	private int lastMoodTick = 0;
+	@Getter private String currentMood = null;
+	@Getter private int lastMoodTick = 0;
 
 	public RobotEntity(EntityType<? extends RobotEntity> entityType, Level level) {
 		super(entityType, level);
 		this.energy = new RobotEnergy(this);
+		this.actionStateMachine = new RobotActionStateMachine(this);
 		this.moveControl = new FlyingMoveControl(this, 20, true);
 	}
 	
@@ -108,6 +111,12 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 		return super.mobInteract(player, hand);
 	}
 	
+	@Override
+	public boolean hurt(DamageSource source, float amount) {
+		playMood("sad", 1);
+		return super.hurt(source, amount);
+	}
+	
 	//region Brain stuff
 	@Override
 	protected Brain.@NotNull Provider<RobotEntity> brainProvider() {
@@ -118,10 +127,46 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	public void customServerAiStep() {
 		this.level().getProfiler().push("robotBrain");
 		this.tickBrain(this);
+		this.level().getProfiler().popPush("robotFSM");
+		this.tickActionStateMachine();
 		this.level().getProfiler().popPush("robotEnergy");
 		this.energy.tick();
 		this.level().getProfiler().pop();
 		super.customServerAiStep();
+	}
+	
+	private void tickActionStateMachine() {
+		if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+			ActionContext context = ActionContext.builder()
+				.robot(this)
+				.level(serverLevel)
+				.gameTime(serverLevel.getGameTime())
+				.miningTask(getCurrentMiningTask())
+				.miningPlan(getCurrentMiningPlan())
+				.currentTarget(null)
+				.ticksInState(0)
+				.needsTool(!(this.getMainHandItem().getItem() instanceof net.minecraft.world.item.DiggerItem))
+				.build();
+				
+			this.actionStateMachine.setContext(context);
+			this.actionStateMachine.tick(this);
+		}
+	}
+	
+	private MiningTaskData getCurrentMiningTask() {
+		return this.getBrain()
+			.getMemory(ModMemoryModuleTypes.CURRENT_TASK.get())
+			.filter(MiningTaskData.class::isInstance)
+			.map(MiningTaskData.class::cast)
+			.orElse(null);
+	}
+	
+	private MiningPathPlan getCurrentMiningPlan() {
+		return this.getBrain()
+			.getMemory(ModMemoryModuleTypes.MINING_PLAN.get())
+			.filter(MiningPathPlan.class::isInstance)
+			.map(MiningPathPlan.class::cast)
+			.orElse(null);
 	}
 	
 	@Override
@@ -225,37 +270,40 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 		controllers.add(new AnimationController<>(this, "controller", 0, this::predicate));
-
-		controllers.add(new AnimationController<>(this, "dialogue_controller", 0, this::dialogueAnimController));
+		
+		AnimationController<RobotEntity> dialogueController = new AnimationController<>(this, "dialogue_controller", 0, this::dialogueAnimController);
+		dialogueController.triggerableAnim("sad", RawAnimation.begin().thenPlay("animation.sad"));
+		dialogueController.triggerableAnim("happy", RawAnimation.begin().thenPlay("animation.happy"));
+		dialogueController.triggerableAnim("wave", RawAnimation.begin().thenPlay("animation.wave"));
+		dialogueController.triggerableAnim("use-tool", RawAnimation.begin().thenPlay("animation.use-tool"));
+		
+		controllers.add(dialogueController);
 	}
-
+	
 	private <E extends GeoAnimatable> PlayState dialogueAnimController(AnimationState<E> state) {
 		if (currentDialogueAnimation != null) {
-			state.getController().setAnimation(
-					RawAnimation.begin().thenPlay(currentDialogueAnimation)
-			);
-
+			state.getController().setAnimation(RawAnimation.begin().thenPlay(currentDialogueAnimation));
+			
 			if (state.getController().hasAnimationFinished()) {
 				currentDialogueAnimation = null;
 				state.getController().forceAnimationReset();
 			}
-
+			
 			return PlayState.CONTINUE;
 		}
-
 		return PlayState.STOP;
 	}
-
+	
 	private <E extends GeoAnimatable> PlayState predicate(AnimationState<E> event) {
-
 		if (currentDialogueAnimation != null) {
 			return PlayState.STOP;
 		}
-
+		
 		if (event.getController().getAnimationState().equals(AnimationController.State.STOPPED)) {
 			RawAnimation rawAnimation = RawAnimation.begin().thenLoop("animation.idle");
 			event.getController().setAnimation(rawAnimation);
 		}
+		
 		return PlayState.CONTINUE;
 	}
 
@@ -298,17 +346,5 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 				.ifPresent(data -> this.brain.setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), data));
 		}
 	}
-	//endregion
-
-
-	//region other animations
-
-	@Override
-	public boolean hurt(DamageSource source, float amount) {
-		playMood("sad", 1);
-		return super.hurt(source, amount);
-	}
-
-
 	//endregion
 }
