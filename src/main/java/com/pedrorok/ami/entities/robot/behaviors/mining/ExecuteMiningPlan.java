@@ -6,7 +6,6 @@ import com.pedrorok.ami.entities.robot.behaviors.mining.MiningUtils;
 import com.pedrorok.ami.entities.robot.tasks.base.TaskType;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningPlan;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningTaskData;
-import com.pedrorok.ami.network.packets.PlayAnimationPacket;
 import com.pedrorok.ami.pathfinding.mining.MiningPathPlan;
 import com.pedrorok.ami.registry.ModMemoryModuleTypes;
 import net.minecraft.core.BlockPos;
@@ -248,7 +247,7 @@ public class ExecuteMiningPlan extends ExtendedBehaviour<RobotEntity> {
         breakingProgress++;
 
         if (breakingProgress == BREAK_TIME - 8) {
-            PacketDistributor.sendToPlayersTrackingEntity(robot, new PlayAnimationPacket("use-tool", robot.getId()));
+            robot.playDialogueAnimation("use-tool");
         }
         
         if (breakingProgress >= BREAK_TIME) {

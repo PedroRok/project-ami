@@ -1,5 +1,8 @@
 package com.pedrorok.ami.client.gui;
 
+import com.mojang.datafixers.kinds.IdF;
+import com.pedrorok.ami.entities.robot.IHaveEnergy;
+import com.pedrorok.ami.entities.robot.RobotEnergy;
 import com.pedrorok.ami.registry.ModSounds;
 import com.pedrorok.ami.system.dialog.DialogueNode;
 import com.pedrorok.ami.system.dialog.actions.DialogueAction;
@@ -10,10 +13,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
-import net.neoforged.fml.common.Mod;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -46,7 +47,7 @@ public class DialogueScreen extends Screen {
     private boolean isTransitioning = false;
     public boolean hasActionsExecuting = false;
     private int actionIndicatorTicks = 0;
-    
+
     // Sistema sequencial de texto com ações
     private List<DialogueNode.TextSegment> textSegments = new ArrayList<>();
     public int currentSegmentIndex = 0;
@@ -67,7 +68,7 @@ public class DialogueScreen extends Screen {
     public DialogueScreen(String dialogueText, String opt1, String opt2, String opt3, DialogueCallback callback) {
         this(dialogueText, opt1, opt2, opt3, callback, null);
     }
-    
+
     /**
      * Construtor para usar com sistema sequencial de texto
      */
@@ -160,7 +161,7 @@ public class DialogueScreen extends Screen {
             }
         }
     }
-    
+
     /**
      * Atualiza o texto de forma sequencial, respeitando as ações
      */
@@ -176,21 +177,21 @@ public class DialogueScreen extends Screen {
             }
             return;
         }
-        
+
         // Modo sequencial - processa segmento por segmento
         if (currentSegmentIndex >= textSegments.size()) {
             textComplete = true;
             showButtons();
             return;
         }
-        
+
         DialogueNode.TextSegment currentSegment = textSegments.get(currentSegmentIndex);
-        
+
         if (currentSegment.hasAction()) {
             // Este segmento tem uma ação - executa
             DialogueAction.ActionContext context =
-                new DialogueAction.ActionContext(Minecraft.getInstance().player, entity, "", 0);
-            
+                    new DialogueAction.ActionContext(Minecraft.getInstance().player, entity, "", 0);
+
             if (currentSegment.action().execute(context)) {
                 currentSegment.action().process(this);
             }
@@ -213,7 +214,7 @@ public class DialogueScreen extends Screen {
             currentSegmentTextIndex = 0;
         }
     }
-    
+
     /**
      * Mostra os botões de opção
      */
@@ -222,7 +223,7 @@ public class DialogueScreen extends Screen {
         option2Button.visible = true;
         option3Button.visible = true;
     }
-    
+
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
@@ -236,30 +237,7 @@ public class DialogueScreen extends Screen {
         int boxY = (this.height - boxHeight) / 2 - 40;
 
         // Renderiza a entidade do lado esquerdo se existir
-        if (entity != null) {
-            int entityX = boxX - 60; // Posição X (à esquerda da caixa)
-            int entityY = boxY + boxHeight - 50; // Posição Y (base da caixa)
-            int entitySize = 50; // Tamanho da entidade
 
-            // Fundo para a entidade (opcional)
-            int bgWidth = 90;
-            guiGraphics.fill(entityX - bgWidth/2, boxY, entityX + bgWidth/2, boxY + boxHeight, 0x88000000);
-            guiGraphics.fill(entityX - bgWidth/2 + 2, boxY + 2, entityX + bgWidth/2 - 2, boxY + boxHeight - 2, 0x55000000);
-
-            // Debug visual
-            guiGraphics.drawString(this.font, "AMI 0" + entity.getId(), entityX - 40, boxY - 15, 0xFFFFFF, false);
-
-            // Renderiza a entidade olhando para o mouse
-            try {
-                renderEntity(guiGraphics, entityX, entityY, entitySize, mouseX, mouseY);
-            } catch (Exception e) {
-                System.out.println("Erro ao renderizar entidade: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            // Debug: mostra que não há entidade
-            guiGraphics.drawString(this.font, "No Entity", boxX - 80, boxY + 10, 0xFF0000, false);
-        }
 
         // Fundo da caixa de diálogo
         guiGraphics.fill(boxX, boxY, boxX + boxWidth, boxY + boxHeight, 0xCC000000);
@@ -286,56 +264,22 @@ public class DialogueScreen extends Screen {
             String actionText = "...";
             int actionX = boxX + 10;
             int actionY = boxY + boxHeight - 15;
-            
+
             // Efeito de piscar
             boolean visible = (actionIndicatorTicks / 10) % 2 == 0;
             if (visible) {
                 guiGraphics.drawString(this.font, actionText, actionX, actionY, 0x00FF00, false);
             }
         }
-    }
 
-    /**
-     * Renderiza a entidade na tela (similar ao inventário do jogador)
-     */
-    private void renderEntity(GuiGraphics guiGraphics, int x, int y, int size, float mouseX, float mouseY) {
-        // Calcula a rotação baseada na posição do mouse
-        float xRotation = (float) Math.atan((double)((y - size / 2) - mouseY) / 40.0);
-        float yRotation = (float) Math.atan((double)(x - mouseX) / 40.0);
-
-        // Rotação da entidade
-        Quaternionf pose = (new Quaternionf()).rotateZ((float) Math.PI);
-        Quaternionf cameraOrientation = (new Quaternionf()).rotateX(xRotation * 20.0F * ((float) Math.PI / 180F));
-        pose.mul(cameraOrientation);
-
-        float yBodyRot = entity.yBodyRot;
-        float yRot = entity.getYRot();
-        float xRot = entity.getXRot();
-        float yHeadRotO = entity.yHeadRotO;
-        float yHeadRot = entity.yHeadRot;
-
-        // Aplica as rotações
-        entity.yBodyRot = 180.0F + yRotation * 20.0F;
-        entity.setXRot(-xRotation * 20.0F);
-        entity.yHeadRot = 180.0F + yRotation * 20.0F;
-
-        // Renderiza a entidade
-        Vector3f vector3f = new Vector3f(0.0F, entity.getBbHeight() / 2.0F + 0.0625F, 0.0F);
-        InventoryScreen.renderEntityInInventory(guiGraphics, x, y, size, vector3f, pose, cameraOrientation, entity);
-
-        // Restaura as rotações originais
-        entity.yBodyRot = yBodyRot;
-        entity.setYRot(yRot);
-        entity.setXRot(xRot);
-        entity.yHeadRotO = yHeadRotO;
-        entity.yHeadRot = yHeadRot;
+        DialogueScreenEntityModule.renderEntity(entity, guiGraphics, boxX, boxY, boxHeight, mouseX, mouseY, this.font);
     }
 
     private void drawWrappedText(GuiGraphics guiGraphics, String text, int x, int y, int maxWidth, int color) {
         // Primeiro, divide o texto por quebras de linha explícitas (\n)
         String[] lines = text.split("\n");
         int currentY = y;
-        
+
         for (String line : lines) {
             // Para cada linha, faz o wrap de palavras se necessário
             String[] words = line.split(" ");
@@ -388,7 +332,7 @@ public class DialogueScreen extends Screen {
             for (DialogueNode.TextSegment textSegment : textSegments) {
                 if (textSegment.hasAction() && textSegment.action().processWhenSkipped()) {
                     DialogueAction.ActionContext context =
-                        new DialogueAction.ActionContext(Minecraft.getInstance().player, entity, "", 0);
+                            new DialogueAction.ActionContext(Minecraft.getInstance().player, entity, "", 0);
                     if (textSegment.action().execute(context)) {
                         textSegment.action().process(this);
                     }

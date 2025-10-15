@@ -81,8 +81,6 @@ public class RobotEntityRenderer extends GeoEntityRenderer<RobotEntity> {
 
             return;
         }
-
-        // Renderizar item no locator da mão direita
         if (bone.getName().equals("right-hand")) {
             super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer,
                     isReRender, partialTick, packedLight, packedOverlay, colour);

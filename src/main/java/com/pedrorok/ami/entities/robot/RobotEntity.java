@@ -64,7 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarrier, GeoEntity, DialogueAnimationHelper.DialogueAnimatable {
+public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarrier, GeoEntity, DialogueAnimationHelper.DialogueAnimatable, IHaveEnergy {
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	
 	@Getter private final RobotEnergy energy;
@@ -262,6 +262,7 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	@Override
 	public void playDialogueAnimation(String animationName) {
 		this.currentDialogueAnimation = "animation." + animationName;
+		triggerAnim("dialogue_controller", currentDialogueAnimation);
 	}
 
 	public void playMood(@Nullable String mood, int sec) {
