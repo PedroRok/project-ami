@@ -47,6 +47,8 @@ public class RobotEntityModel extends GeoModel<RobotEntity> {
 	public void setCustomAnimations(RobotEntity animatable, long instanceId, AnimationState<RobotEntity> animationState) {
 		EntityModelData data = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
 		if (data == null) return;
+
+		if (animatable.tickCount < 60) return;
 		
 		final AnimationProcessor<RobotEntity> processor = getAnimationProcessor();
 		float headPitch = data.headPitch() * Mth.DEG_TO_RAD;

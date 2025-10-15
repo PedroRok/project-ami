@@ -116,7 +116,14 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 		playMood("sad", 1);
 		return super.hurt(source, amount);
 	}
-	
+
+
+	@Override
+	public void onAddedToLevel() {
+		playDialogueAnimation("spawn");
+		super.onAddedToLevel();
+	}
+
 	//region Brain stuff
 	@Override
 	protected Brain.@NotNull Provider<RobotEntity> brainProvider() {
@@ -276,6 +283,7 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 		dialogueController.triggerableAnim("happy", RawAnimation.begin().thenPlay("animation.happy"));
 		dialogueController.triggerableAnim("wave", RawAnimation.begin().thenPlay("animation.wave"));
 		dialogueController.triggerableAnim("use-tool", RawAnimation.begin().thenPlay("animation.use-tool"));
+		dialogueController.triggerableAnim("spawn", RawAnimation.begin().thenPlay("animation.spawn"));
 		
 		controllers.add(dialogueController);
 	}

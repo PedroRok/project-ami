@@ -58,6 +58,7 @@ public class RobotEntityRenderer extends GeoEntityRenderer<RobotEntity> {
     ) {
         if (bone.getName().equals("face")) {
             boolean blink = false;
+            if (animatable.tickCount < 30) return;
             if (animatable.tickCount % 60 == 0) {
                 blinkTick = 5;
             }
@@ -70,7 +71,7 @@ public class RobotEntityRenderer extends GeoEntityRenderer<RobotEntity> {
             ResourceLocation displayEye = hasMood ? MOODS.get(animatable.getCurrentMood()) : null;
             ResourceLocation eyeTexture = displayEye != null ? displayEye : DEFAULT_EYE;
 
-            eyeTexture = blink ? BLINK_EYE : eyeTexture;
+            eyeTexture = blink || animatable.tickCount < 50 ? BLINK_EYE : eyeTexture;
             super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource,  bufferSource.getBuffer(RenderType.entityTranslucentEmissive(eyeTexture)), isReRender, partialTick, packedLight, packedOverlay, colour);
 
 

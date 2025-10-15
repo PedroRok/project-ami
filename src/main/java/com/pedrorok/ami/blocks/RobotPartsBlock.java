@@ -4,6 +4,7 @@ import com.pedrorok.ami.entities.robot.RobotEntity;
 import com.pedrorok.ami.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -66,7 +67,7 @@ public class RobotPartsBlock extends Block {
     );
 
     public RobotPartsBlock() {
-        super(BlockBehaviour.Properties.of().noOcclusion().dynamicShape().isViewBlocking((a, b, c) -> false).strength(2.0f));
+        super(BlockBehaviour.Properties.of().noOcclusion().dynamicShape().isViewBlocking((a, b, c) -> false).strength(2.0f).lightLevel((state) -> 1));
         registerDefaultState(this.getStateDefinition().any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(HEAD, false)
@@ -87,9 +88,9 @@ public class RobotPartsBlock extends Block {
         Player player = context.getPlayer();
         if (player == null) {
             return this.defaultBlockState()
-                    .setValue(FACING, context.getClickedFace().getOpposite());
+                    .setValue(FACING, context.getClickedFace());
         }
-        Direction direction = player.getDirection();
+        Direction direction = player.getDirection().getOpposite();
         return this.defaultBlockState()
                 .setValue(FACING, direction);
     }
@@ -137,9 +138,12 @@ public class RobotPartsBlock extends Block {
 
         RobotEntity robot = new RobotEntity(ModEntities.ROBOT.get(), level);
         Vec3 center = pos.getCenter();
-        robot.moveTo(center.x, center.y-0.5, center.z);
+        robot.moveTo(center.x, center.y-0.5, center.z, state.getValue(FACING).toYRot(), 0);
+        robot.yHeadRot = robot.getYRot();
+        robot.setXRot(0);
         level.addFreshEntity(robot);
         robot.setOwner(player);
+        robot.setYRot(90);
     }
 
     @Override
