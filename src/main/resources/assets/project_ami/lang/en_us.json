@@ -1,5 +1,7 @@
 {
   "itemGroup.project_ami": "Example Mod Tab",
-  "block.project_ami.example_block": "Example Block",
-  "item.project_ami.example_item": "Example Item"
+  "block.project_ami.ami_block": "Robot Body",
+  "entity.project_ami.robot": "Robot",
+  "item.project_ami.ami_head": "Robot Head",
+  "item.project_ami.ami_arm": "Robot Arm"
 }

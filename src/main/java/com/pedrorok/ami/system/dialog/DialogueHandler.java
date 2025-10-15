@@ -30,39 +30,40 @@ public class DialogueHandler {
 
     private void registerDialogues() {
         DialogueNode greeting = new DialogueNode(
-                "<anim_happy><mood_happy_3>Olá <player>!<wait_2><br>Meu nome é AMI<br><wait_2>Eu sou um robô amigável aqui para te ajudar.<br>Como posso te ajudar hoje?",
-                "Fazer uma pergunta",
-                "Ver itens disponíveis", 
-                "Sair"
+                "<anim_happy><mood_happy_3>Hello <player>!<wait_2><br>My name is AMI<br><wait_2>I’m a friendly robot here to help you.<br>How can I assist you today?",
+                "Can you do something for me?",
+                "What can you do?",
+                "Exit"
         );
 
         DialogueNode shopItems = new DialogueNode(
-                "<anim_happy>Tenho várias coisas interessantes aqui!<br>O que você gostaria de fazer?",
-                "Ver ferramentas de mineração",
-                "Ver materiais de construção",
-                "Voltar"
+                "<anim_happy>I’ve got lots of interesting things here!<br>What would you like to do?",
+                "See mining tools",
+                "See building materials",
+                "Back"
         );
 
         DialogueNode question = new DialogueNode(
-                "<anim_happy>Claro! Pergunta o que quiser.<br><wait_1>Estou aqui há muitos anos e conheço este lugar muito bem.",
-                "De onde você vem?",
-                "O que você sabe sobre esta área?",
-                "Voltar"
+                "<anim_happy>Of course! Ask whatever you’d like.<br><wait_1>I’ve been here for many years and know this place very well.",
+                "Where are you from?",
+                "What do you know about this area?",
+                "Back"
         );
 
         DialogueNode tools = new DialogueNode(
-                "<anim_happy>Ferramentas de mineração!<br>Tenho picaretas e outras ferramentas úteis.",
-                "Comprar picareta de ferro",
-                "Comprar picareta de diamante",
-                "Voltar"
+                "<anim_happy>Mining tools!<br>I have pickaxes and other useful tools.",
+                "Buy iron pickaxe",
+                "Buy diamond pickaxe",
+                "Back"
         );
 
         DialogueNode materials = new DialogueNode(
-                "<anim_wave>Materiais de construção!<br>Blocos, tijolos e muito mais.",
-                "Ver blocos de construção",
-                "Ver materiais decorativos",
-                "Voltar"
+                "<anim_wave>Building materials!<br>Blocks, bricks, and much more.",
+                "See building blocks",
+                "See decorative materials",
+                "Back"
         );
+
 
         // Conecta os nós do diálogo
         greeting.setOptionCallback(1, question);
