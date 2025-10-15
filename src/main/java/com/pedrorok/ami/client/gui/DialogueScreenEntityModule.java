@@ -1,10 +1,13 @@
 package com.pedrorok.ami.client.gui;
 
+import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.entities.robot.IHaveEnergy;
 import com.pedrorok.ami.entities.robot.RobotEnergy;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -14,6 +17,17 @@ import org.joml.Vector3f;
  * @project project-ami
  */
 public class DialogueScreenEntityModule {
+
+    private static final Int2ObjectArrayMap<ResourceLocation> BATERY_TEXTURE = new Int2ObjectArrayMap<>(){
+        {
+            put(0, ResourceLocation.fromNamespaceAndPath(ProjectAmi.MOD_ID, "textures/gui/battery_0.png"));
+            put(1, ResourceLocation.fromNamespaceAndPath(ProjectAmi.MOD_ID,  "textures/gui/battery_1_alert.png"));
+            put(2, ResourceLocation.fromNamespaceAndPath(ProjectAmi.MOD_ID, "textures/gui/battery_1.png"));
+            put(3, ResourceLocation.fromNamespaceAndPath(ProjectAmi.MOD_ID, "textures/gui/battery_2.png"));
+            put(4, ResourceLocation.fromNamespaceAndPath(ProjectAmi.MOD_ID, "textures/gui/battery_3.png"));
+            put(5, ResourceLocation.fromNamespaceAndPath(ProjectAmi.MOD_ID, "textures/gui/battery_full.png"));
+        }
+    };
 
     public static void renderEntity(LivingEntity entity, GuiGraphics guiGraphics, int boxX, int boxY, int boxHeight, int mouseX, int mouseY, Font font) {
         if (entity == null) {
@@ -35,31 +49,33 @@ public class DialogueScreenEntityModule {
         // Energy (na lateral direita da caixa da entidade, aparece o item que está segurando e a energia)
         if (entity.getMainHandItem() != null && !entity.getMainHandItem().
                 isEmpty()) {
-            guiGraphics.renderItem(entity.getMainHandItem(), entityX - 42, boxY + boxHeight - 20);
+            guiGraphics.renderItem(entity.getMainHandItem(), entityX - 42, boxY + boxHeight - 22);
         }
         // Textura de bateria, quando hover aparece a
         if (entity instanceof IHaveEnergy energyEntity) {
             RobotEnergy energy = energyEntity.getEnergy();
             float energyPercent = energy.getEnergyPercentage();
-            int barHeight = 40;
-            int barWidth = 6;
-            int barX = entityX + 30;
-            int barY = boxY + boxHeight - 10 - barHeight;
-            guiGraphics.fill(barX, barY, barX + barWidth, boxY + boxHeight - 10, 0xFF000000);
-            int filledHeight = (int) (barHeight * energyPercent);
-            int filledY = barY + (barHeight - filledHeight);
-            int barColor = energyPercent > 0.5f ? 0xFF00FF00 : (energyPercent > 0.2f ? 0xFFFFFF00 : 0xFFFF0000);
-            guiGraphics.fill(barX + 1, filledY, barX + barWidth - 1, boxY + boxHeight - 10 - 1, barColor);
-
-            if (barX <= mouseX && mouseX <= barX + barWidth && barY <= mouseY && mouseY <= boxY + boxHeight - 10) {
-
-                String energyText = String.format("%d / %d FE", energy.getCurrentEnergy(), energy.getMaxEnergy());
-                int textWidth = font.width(energyText);
-                guiGraphics.fill(mouseX - 2, mouseY - 10, mouseX + textWidth + 2, mouseY + 10, 0xCC000000);
-                guiGraphics.drawString(font, energyText, mouseX, mouseY - 5, 0xFFFFFF, false);
+            int batteryVal = (int) (energyPercent * 5);
+            if (batteryVal == 1 || batteryVal == 2) {
+                batteryVal = 2;
+                if (entity.tickCount % 20 > 10) {
+                    batteryVal = 1;
+                }
             }
 
+            ResourceLocation batteryTexture = BATERY_TEXTURE.getOrDefault(batteryVal, BATERY_TEXTURE.get(0));
+            int barWidth = 32;
+            int barHeight = 32;
+            int barX = entityX + 26;
+            int barY = boxY + (boxHeight - barHeight) + 5;
+            guiGraphics.blit(batteryTexture, barX, barY, 0, 0, barWidth, barHeight, barWidth, barHeight);
 
+            if (barX <= mouseX && mouseX <= barX + 16 && barY <= mouseY && mouseY <= boxY + boxHeight) {
+                String energyText = String.format("%d", (int) energy.getEnergyPercentage() * 100) + "%";
+                int textWidth = font.width(energyText);
+                guiGraphics.fill(mouseX - 2 +10, mouseY - 5, mouseX + textWidth + 12, mouseY + 13, 0xCC000000);
+                guiGraphics.drawString(font, energyText, mouseX +10, mouseY, 0xFFFFFF, false);
+            }
         }
 
         // Renderiza a entidade olhando para o mouse
