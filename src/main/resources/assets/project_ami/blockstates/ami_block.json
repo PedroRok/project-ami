@@ -1,0 +1,124 @@
+{
+  "multipart": [
+    {
+      "when": { "facing": "down" },
+      "apply": { "model": "project_ami:block/ami_base", "x": 90 }
+    },
+    {
+      "when": { "facing": "up" },
+      "apply": { "model": "project_ami:block/ami_base", "x": 270 }
+    },
+    {
+      "when": { "facing": "north" },
+      "apply": { "model": "project_ami:block/ami_base" }
+    },
+    {
+      "when": { "facing": "south" },
+      "apply": { "model": "project_ami:block/ami_base", "y": 180 }
+    },
+    {
+      "when": { "facing": "west" },
+      "apply": { "model": "project_ami:block/ami_base", "y": 270 }
+    },
+    {
+      "when": { "facing": "east" },
+      "apply": { "model": "project_ami:block/ami_base", "y": 90 }
+    },
+    {
+      "when": { "head": "true", "facing": "down" },
+      "apply": { "model": "project_ami:block/ami_head", "x": 90 }
+    },
+    {
+      "when": { "head": "true", "facing": "up" },
+      "apply": { "model": "project_ami:block/ami_head", "x": 270 }
+    },
+    {
+      "when": { "head": "true", "facing": "north" },
+      "apply": { "model": "project_ami:block/ami_head" }
+    },
+    {
+      "when": { "head": "true", "facing": "south" },
+      "apply": { "model": "project_ami:block/ami_head", "y": 180 }
+    },
+    {
+      "when": { "head": "true", "facing": "west" },
+      "apply": { "model": "project_ami:block/ami_head", "y": 270 }
+    },
+    {
+      "when": { "head": "true", "facing": "east" },
+      "apply": { "model": "project_ami:block/ami_head", "y": 90 }
+    },
+    {
+      "when": { "left_arm": "true", "facing": "down" },
+      "apply": { "model": "project_ami:block/ami_left_arm", "x": 90 }
+    },
+    {
+      "when": { "left_arm": "true", "facing": "up" },
+      "apply": { "model": "project_ami:block/ami_left_arm", "x": 270 }
+    },
+    {
+      "when": { "left_arm": "true", "facing": "north" },
+      "apply": { "model": "project_ami:block/ami_left_arm" }
+    },
+    {
+      "when": { "left_arm": "true", "facing": "south" },
+      "apply": { "model": "project_ami:block/ami_left_arm", "y": 180 }
+    },
+    {
+      "when": { "left_arm": "true", "facing": "west" },
+      "apply": { "model": "project_ami:block/ami_left_arm", "y": 270 }
+    },
+    {
+      "when": { "left_arm": "true", "facing": "east" },
+      "apply": { "model": "project_ami:block/ami_left_arm", "y": 90 }
+    },
+    {
+      "when": { "right_arm": "true", "facing": "down" },
+      "apply": { "model": "project_ami:block/ami_right_arm", "x": 90 }
+    },
+    {
+      "when": { "right_arm": "true", "facing": "up" },
+      "apply": { "model": "project_ami:block/ami_right_arm", "x": 270 }
+    },
+    {
+      "when": { "right_arm": "true", "facing": "north" },
+      "apply": { "model": "project_ami:block/ami_right_arm" }
+    },
+    {
+      "when": { "right_arm": "true", "facing": "south" },
+      "apply": { "model": "project_ami:block/ami_right_arm", "y": 180 }
+    },
+    {
+      "when": { "right_arm": "true", "facing": "west" },
+      "apply": { "model": "project_ami:block/ami_right_arm", "y": 270 }
+    },
+    {
+      "when": { "right_arm": "true", "facing": "east" },
+      "apply": { "model": "project_ami:block/ami_right_arm", "y": 90 }
+    },
+    {
+      "when": { "reactor": "true", "facing": "down" },
+      "apply": { "model": "project_ami:block/ami_reactor", "x": 90 }
+    },
+    {
+      "when": { "reactor": "true", "facing": "up" },
+      "apply": { "model": "project_ami:block/ami_reactor", "x": 270 }
+    },
+    {
+      "when": { "reactor": "true", "facing": "north" },
+      "apply": { "model": "project_ami:block/ami_reactor" }
+    },
+    {
+      "when": { "reactor": "true", "facing": "south" },
+      "apply": { "model": "project_ami:block/ami_reactor", "y": 180 }
+    },
+    {
+      "when": { "reactor": "true", "facing": "west" },
+      "apply": { "model": "project_ami:block/ami_reactor", "y": 270 }
+    },
+    {
+      "when": { "reactor": "true", "facing": "east" },
+      "apply": { "model": "project_ami:block/ami_reactor", "y": 90 }
+    }
+  ]
+}

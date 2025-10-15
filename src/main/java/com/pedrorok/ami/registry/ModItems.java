@@ -1,6 +1,7 @@
 package com.pedrorok.ami.registry;
 
 import com.pedrorok.ami.ProjectAmi;
+import com.pedrorok.ami.items.AmiPartItem;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -10,14 +11,19 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class ModItems {
 	public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, ProjectAmi.MOD_ID);
-	
+
+
 	// Robot Parts
-	public static final DeferredHolder<Item, BlockItem> ROBOT_PART = ITEMS.register("robot_part",
+	public static final DeferredHolder<Item, BlockItem> ROBOT_PART = ITEMS.register("ami_body",
 		() -> new BlockItem(ModBlocks.ROBOT_PART.get(), new Item.Properties().rarity(Rarity.UNCOMMON))
 	);
 	
 	// Reactor Core (for energy refueling)
-	public static final DeferredHolder<Item, Item> REACTOR_CORE = ITEMS.register("reactor_core",
-		() -> new Item(new Item.Properties().rarity(Rarity.RARE).stacksTo(16))
+	public static final DeferredHolder<Item, Item> AMI_ARM = ITEMS.register("ami_arm",
+		() -> new AmiPartItem("arm")
+	);
+
+	public static final DeferredHolder<Item, Item> AMI_HEAD = ITEMS.register("ami_head",
+			() -> new AmiPartItem("head")
 	);
 }
