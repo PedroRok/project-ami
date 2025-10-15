@@ -119,7 +119,7 @@ public class MiningState implements StateHandler {
         failedAttempts = 0;
         breakingProgress++;
         
-        if (breakingProgress == BREAK_TIME - 8) {
+        if (breakingProgress == BREAK_TIME - 4) {
             robot.playDialogueAnimation("use-tool");
         }
         

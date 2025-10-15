@@ -74,7 +74,7 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	private final SimpleContainer inventory = new SimpleContainer(9);
 	@Getter private final RobotActionStateMachine actionStateMachine;
 	
-	private String currentDialogueAnimation = null;
+	@Getter private String currentDialogueAnimation = null;
 	@Getter private String currentMood = null;
 	@Getter private int lastMoodTick = 0;
 
@@ -317,7 +317,7 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 
 	@Override
 	public void playDialogueAnimation(String animationName) {
-		this.currentDialogueAnimation = "animation." + animationName;
+		this.currentDialogueAnimation = animationName;
 		triggerAnim("dialogue_controller", currentDialogueAnimation);
 	}
 

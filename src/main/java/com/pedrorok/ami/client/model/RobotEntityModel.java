@@ -8,6 +8,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.AnimationProcessor;
 import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -64,7 +65,7 @@ public class RobotEntityModel extends GeoModel<RobotEntity> {
 		GeoBone rightArm = processor.getBone("right-arm");
 		GeoBone body = processor.getBone("chest");
 		Vec3 deltaMovement = animatable.getDeltaMovement();
-		if (leftArm != null && rightArm != null && body != null && animatable.getDeltaMovement().length() > 0.01) {
+		if (leftArm != null && rightArm != null && body != null && animationState.getController().getAnimationState().equals(AnimationController.State.STOPPED)) {
 			Vec3 direction = Vec3.directionFromRotation(animatable.getXRot(), animatable.getYRot() );
 
 			// TODO: improve this
