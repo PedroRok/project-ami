@@ -14,38 +14,18 @@
 				{
 					"name": "body",
 					"pivot": [0, 7.5, 0],
-					"cubes": [
-						{
-							"origin": [-3, 2, -2],
-							"size": [6, 1, 4],
-							"uv": {
-								"north": {"uv": [24, 17], "uv_size": [6, 1]},
-								"east": {"uv": [14, 10], "uv_size": [4, 1]},
-								"south": {"uv": [24, 18], "uv_size": [6, 1]},
-								"west": {"uv": [14, 11], "uv_size": [4, 1]},
-								"down": {"uv": [20, 4], "uv_size": [6, -4]}
-							}
-						},
-						{
-							"origin": [-3, 3, -2.5],
-							"size": [6, 6, 5],
-							"uv": {
-								"north": {"uv": [18, 7], "uv_size": [6, 6]},
-								"east": {"uv": [0, 19], "uv_size": [5, 6]},
-								"south": {"uv": [18, 13], "uv_size": [6, 6]},
-								"west": {"uv": [5, 19], "uv_size": [5, 6]},
-								"up": {"uv": [10, 19], "uv_size": [6, 5]},
-								"down": {"uv": [16, 24], "uv_size": [6, -5]}
-							}
-						}
-					],
 					"locators": {
 						"body-particle": [0, 2, 0]
 					}
 				},
 				{
-					"name": "left-arm",
+					"name": "chest",
 					"parent": "body",
+					"pivot": [0, 8, 0]
+				},
+				{
+					"name": "left-arm",
+					"parent": "chest",
 					"pivot": [4.5, 8.5, 0],
 					"cubes": [
 						{
@@ -85,8 +65,38 @@
 					}
 				},
 				{
+					"name": "body-solo",
+					"parent": "chest",
+					"pivot": [0, 7, 0],
+					"cubes": [
+						{
+							"origin": [-3, 2, -2],
+							"size": [6, 1, 4],
+							"uv": {
+								"north": {"uv": [24, 17], "uv_size": [6, 1]},
+								"east": {"uv": [14, 10], "uv_size": [4, 1]},
+								"south": {"uv": [24, 18], "uv_size": [6, 1]},
+								"west": {"uv": [14, 11], "uv_size": [4, 1]},
+								"down": {"uv": [20, 4], "uv_size": [6, -4]}
+							}
+						},
+						{
+							"origin": [-3, 3, -2.5],
+							"size": [6, 6, 5],
+							"uv": {
+								"north": {"uv": [18, 7], "uv_size": [6, 6]},
+								"east": {"uv": [0, 19], "uv_size": [5, 6]},
+								"south": {"uv": [18, 13], "uv_size": [6, 6]},
+								"west": {"uv": [5, 19], "uv_size": [5, 6]},
+								"up": {"uv": [10, 19], "uv_size": [6, 5]},
+								"down": {"uv": [16, 24], "uv_size": [6, -5]}
+							}
+						}
+					]
+				},
+				{
 					"name": "right-arm",
-					"parent": "body",
+					"parent": "chest",
 					"pivot": [-4.5, 8.5, 0],
 					"cubes": [
 						{

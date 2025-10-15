@@ -2,6 +2,7 @@ package com.pedrorok.ami.client.model;
 
 import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.entities.robot.RobotEntity;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -55,6 +56,26 @@ public class RobotEntityModel extends GeoModel<RobotEntity> {
 		if (head != null) {
 			head.setRotX(headPitch);
 			head.setRotY(headYaw);
+		}
+
+		GeoBone leftArm = processor.getBone("left-arm");
+		GeoBone rightArm = processor.getBone("right-arm");
+		GeoBone body = processor.getBone("chest");
+		Vec3 deltaMovement = animatable.getDeltaMovement();
+		if (leftArm != null && rightArm != null && body != null && animatable.getDeltaMovement().length() > 0.01) {
+			Vec3 direction = Vec3.directionFromRotation(animatable.getXRot(), animatable.getYRot() );
+
+			// TODO: improve this
+			deltaMovement = deltaMovement.subtract(direction.scale(deltaMovement.dot(direction))).scale(-1);
+			rightArm.setRotX((float) deltaMovement.x);
+			rightArm.setRotZ((float) deltaMovement.z);
+
+			leftArm.setRotX((float) deltaMovement.x);
+			leftArm.setRotZ((float) deltaMovement.z);
+
+
+			body.setRotX((float) deltaMovement.x);
+			body.setRotZ((float) deltaMovement.z);
 		}
 		
 		GeoBone face = processor.getBone("face");

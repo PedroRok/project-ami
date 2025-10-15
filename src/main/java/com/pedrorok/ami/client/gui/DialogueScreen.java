@@ -196,7 +196,7 @@ public class DialogueScreen extends Screen {
                 currentSegment.action().process(this);
             }
         } else if (currentSegment.hasText()) {
-            if (Minecraft.getInstance().player.tickCount % 2 == 0)
+            if (entity.tickCount % 2 == 0)
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.CHAT_SFX.get(), 1f));
             // Este segmento tem texto - digita ele
             String segmentText = currentSegment.text();
