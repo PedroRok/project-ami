@@ -148,9 +148,6 @@ public class DebugCommands {
 				
 				robot.getBrain().getMemory(ModMemoryModuleTypes.CURRENT_TASK.get()).ifPresent(task -> {
 					if (task instanceof MiningTaskData miningTask) {
-						source.sendSuccess(() -> Component.literal("Mining Task: " + miningTask.getMinedBlocks() + "/" + 
-							miningTask.getTotalBlocks() + " (" + miningTask.getDirection().getName() + ", " + 
-							miningTask.getPattern().getSerializedName() + ")"), false);
 						if (miningTask.getCurrentTarget() != null) {
 							source.sendSuccess(() -> Component.literal("Current Target: " + miningTask.getCurrentTarget()), false);
 						}

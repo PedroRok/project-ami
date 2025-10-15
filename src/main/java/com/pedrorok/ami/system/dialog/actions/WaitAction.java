@@ -1,15 +1,11 @@
 package com.pedrorok.ami.system.dialog.actions;
 
-import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.client.gui.DialogueScreen;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
-/**
- * Ação para fazer o diálogo aguardar um determinado tempo (baseado em ticks)
- * @author Rok, Pedro Lucas nmm. Created on 11/10/2025
- * @project project-ami
- */
 @Getter
+@Slf4j
 public class WaitAction implements DialogueAction {
     
     private final int waitTicks;
@@ -33,7 +29,7 @@ public class WaitAction implements DialogueAction {
         // Inicia a espera baseada em ticks
         this.isWaiting = true;
         this.currentTicks = 0;
-        ProjectAmi.LOGGER.debug("WaitAction: Iniciando espera de {} ticks ({} segundos)", waitTicks, waitTicks / 20);
+        log.debug("WaitAction: Iniciando espera de {} ticks ({} segundos)", waitTicks, waitTicks / 20);
         return true;
     }
 
@@ -56,7 +52,7 @@ public class WaitAction implements DialogueAction {
         currentTicks++;
         if (currentTicks >= waitTicks) {
             isWaiting = false;
-            ProjectAmi.LOGGER.debug("WaitAction: Espera concluída após {} ticks", currentTicks);
+            log.debug("WaitAction: Espera concluída após {} ticks", currentTicks);
             return false;
         }
         

@@ -1,39 +1,38 @@
 package com.pedrorok.ami.entities.robot.tasks.mining;
 
-import com.pedrorok.ami.ProjectAmi;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
+import com.pedrorok.ami.entities.robot.RobotEntity;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Plano de mineração completo que contém todos os blocos que serão minerados
- * e obstáculos identificados antecipadamente.
- */
+@Slf4j
 public class MiningPlan {
 	
-    private final List<BlockPos> blocksToMine; // Sequência exata de blocos
-    private final List<BlockPos> obstaclesInPath; // Obstáculos na navegação
-    private final int estimatedTime; // Estimativa em ticks
-    private final boolean isViable; // Se a task é viável
-    private String failureReason; // Motivo de falha (se não viável)
+    private final List<BlockPos> blocksToMine;
+    private final List<BlockPos> obstaclesInPath;
+    private final int estimatedTime;
+    private final boolean isViable;
+    private String failureReason;
     
-    private int currentBlockIndex = 0; // Índice do bloco atual sendo minerado
-    private int completedBlocks = 0; // Contador de blocos completados
+    private int currentBlockIndex = 0;
+    private int completedBlocks = 0;
     
     public MiningPlan(List<BlockPos> blocksToMine, List<BlockPos> obstaclesInPath) {
         this.blocksToMine = new ArrayList<>(blocksToMine);
         this.obstaclesInPath = new ArrayList<>(obstaclesInPath);
-        this.estimatedTime = blocksToMine.size() * 20; // 20 ticks por bloco (1 segundo)
+        this.estimatedTime = blocksToMine.size() * 20;
         this.isViable = !blocksToMine.isEmpty();
         this.failureReason = null;
         
-        ProjectAmi.LOGGER.info("[MiningPlan] Criado plano com {} blocos e {} obstáculos", 
+        log.info("[MiningPlan] Criado plano com {} blocos e {} obstáculos", 
             blocksToMine.size(), obstaclesInPath.size());
     }
     
@@ -44,7 +43,7 @@ public class MiningPlan {
         this.isViable = false;
         this.failureReason = failureReason;
         
-        ProjectAmi.LOGGER.warn("[MiningPlan] Plano inviável: {}", failureReason);
+        log.warn("[MiningPlan] Plano inviável: {}", failureReason);
     }
     
     // Getters
@@ -60,19 +59,60 @@ public class MiningPlan {
     /**
      * Retorna o próximo bloco a ser minerado
      */
+    public BlockPos getNextBlockForRobot(RobotEntity robot, int searchRadius, Set<BlockPos> blacklist) {
+        if (currentBlockIndex >= blocksToMine.size()) {
+            return null;
+        }
+        
+        BlockPos robotPos = robot.blockPosition();
+        int searchLimit = Math.min(currentBlockIndex + searchRadius, blocksToMine.size());
+        
+        BlockPos closestBlock = null;
+        double closestDistance = Double.MAX_VALUE;
+        
+        for (int i = currentBlockIndex; i < searchLimit; i++) {
+            BlockPos candidate = blocksToMine.get(i);
+            
+            if (blacklist != null && blacklist.contains(candidate)) {
+                continue;
+            }
+            
+            double distance = robotPos.distSqr(candidate);
+            
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestBlock = candidate;
+            }
+        }
+        
+        return closestBlock != null ? closestBlock : (currentBlockIndex < blocksToMine.size() ? blocksToMine.get(currentBlockIndex) : null);
+    }
+    
+    public void markBlockCompletedAt(BlockPos pos) {
+        for (int i = currentBlockIndex; i < blocksToMine.size(); i++) {
+            if (blocksToMine.get(i).equals(pos)) {
+                if (i == currentBlockIndex) {
+                    markBlockCompleted();
+                } else {
+                    blocksToMine.remove(i);
+                    completedBlocks++;
+                    log.debug("Bloco fora de ordem {} completado", pos);
+                }
+                return;
+            }
+        }
+    }
+    
     public BlockPos getNextBlock() {
         if (currentBlockIndex >= blocksToMine.size()) {
-            return null; // Plano completo
+            return null;
         }
         return blocksToMine.get(currentBlockIndex);
     }
     
-    /**
-     * Retorna o bloco atual sendo minerado
-     */
     public BlockPos getCurrentBlock() {
         if (currentBlockIndex >= blocksToMine.size()) {
-            return null; // Plano completo
+            return null;
         }
         return blocksToMine.get(currentBlockIndex);
     }
@@ -85,7 +125,7 @@ public class MiningPlan {
             completedBlocks++;
             currentBlockIndex++;
             
-            ProjectAmi.LOGGER.debug("[MiningPlan] Bloco {} completado. Progresso: {}/{}", 
+            log.debug("[MiningPlan] Bloco {} completado. Progresso: {}/{}", 
                 currentBlockIndex - 1, completedBlocks, blocksToMine.size());
         }
     }
@@ -114,58 +154,12 @@ public class MiningPlan {
         // Verificar se todos os blocos ainda existem e são mineráveis
         for (BlockPos block : blocksToMine) {
             if (level.getBlockState(block).isAir()) {
-                ProjectAmi.LOGGER.warn("[MiningPlan] Bloco {} já foi minerado!", block);
+                log.warn("[MiningPlan] Bloco {} já foi minerado!", block);
                 return false;
             }
         }
         
         return true;
-    }
-    
-    /**
-     * Cria um plano de mineração baseado nos parâmetros da task
-     */
-    public static MiningPlan createFromTask(MiningTaskData task, Level level) {
-        List<BlockPos> plannedBlocks = new ArrayList<>();
-        
-        // Calcular todos os blocos que serão minerados
-        for (int i = 0; i < task.getTotalBlocks(); i++) {
-            BlockPos offset = new BlockPos(
-                task.getDirection().getStepX() * i,
-                task.getDirection().getStepY() * i,
-                task.getDirection().getStepZ() * i
-            );
-            
-            BlockPos blockPos = switch (task.getPattern()) {
-                case STRAIGHT -> task.getStartPos().offset(offset);
-                case TUNNEL_2X1 -> calculateTunnelBlock(task.getStartPos().offset(offset), task.getDirection(), 2, i);
-                case TUNNEL_3X3 -> calculateTunnelBlock(task.getStartPos().offset(offset), task.getDirection(), 3, i);
-                case STAIRCASE -> calculateStaircaseBlock(task.getStartPos().offset(offset), i);
-                case BRANCH -> calculateBranchBlock(task.getStartPos().offset(offset), task.getDirection(), i);
-            };
-            
-            plannedBlocks.add(blockPos);
-        }
-        
-        // Verificar viabilidade
-        List<BlockPos> viableBlocks = new ArrayList<>();
-        for (BlockPos block : plannedBlocks) {
-            if (!level.getBlockState(block).isAir()) {
-                viableBlocks.add(block);
-            }
-        }
-        
-        if (viableBlocks.isEmpty()) {
-            return new MiningPlan("Nenhum bloco sólido encontrado para minerar");
-        }
-        
-        // 🆕 ORDENAÇÃO INTELIGENTE baseada no pattern
-        List<BlockPos> orderedBlocks = smartSort(viableBlocks, task, level);
-        
-        // Identificar obstáculos na navegação (simplificado)
-        List<BlockPos> obstacles = findNavigationObstacles(task.getStartPos(), orderedBlocks, level);
-        
-        return new MiningPlan(orderedBlocks, obstacles);
     }
     
     /**

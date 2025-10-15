@@ -1,18 +1,15 @@
 package com.pedrorok.ami.pathfinding.mining;
 
-import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.entities.robot.tasks.mining.MiningPlan;
 import com.pedrorok.ami.pathfinding.octree.SpatialOctree;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Plano de mineração estendido que integra octree pathfinding.
- * Herda funcionalidade básica de MiningPlan e adiciona capacidades de octree.
- */
+@Slf4j
 public class MiningPathPlan extends MiningPlan {
     private final SpatialOctree octree;
     private final MiningPathfinder pathfinder;
@@ -22,28 +19,22 @@ public class MiningPathPlan extends MiningPlan {
         this.octree = octree;
         this.pathfinder = pathfinder;
         
-        ProjectAmi.LOGGER.info("[MiningPathPlan] Created with {} blocks, {} obstacles, octree: {}, pathfinder: {}", 
+        log.info("[MiningPathPlan] Created with {} blocks, {} obstacles, octree: {}, pathfinder: {}", 
             blocks.size(), obstacles.size(), octree != null, pathfinder != null);
     }
     
-    /**
-     * Construtor para casos de erro (quando não há blocos para minerar).
-     */
     public MiningPathPlan(String failureReason) {
         super(failureReason);
         this.octree = null;
         this.pathfinder = null;
         
-        ProjectAmi.LOGGER.warn("[MiningPathPlan] Created with failure: {}", failureReason);
+        log.warn("[MiningPathPlan] Created with failure: {}", failureReason);
     }
     
-    /**
-     * Atualiza a octree quando um bloco é modificado no mundo.
-     */
     public void updateOctree(BlockPos pos, BlockState newState) {
         if (octree != null) {
             octree.update(pos, newState);
-            ProjectAmi.LOGGER.debug("[MiningPathPlan] Updated octree at {}", pos);
+            log.debug("[MiningPathPlan] Updated octree at {}", pos);
         }
     }
     
@@ -66,10 +57,9 @@ public class MiningPathPlan extends MiningPlan {
      */
     public boolean isBlockAccessible(BlockPos pos) {
         if (octree == null) {
-            return true; // Fallback se octree não estiver disponível
+            return true;
         }
         
-        // Verificar se o nó da octree é navegável
         var node = octree.findNode(pos);
         return node != null && node.getState() != com.pedrorok.ami.pathfinding.octree.NodeState.SOLID;
     }
@@ -90,9 +80,7 @@ public class MiningPathPlan extends MiningPlan {
             return false;
         }
         
-        // Validação adicional usando octree
         if (octree != null) {
-            // Verificar se ainda há blocos navegáveis
             List<BlockPos> remainingBlocks = getRemainingBlocks();
             int navigableBlocks = 0;
             
@@ -102,9 +90,8 @@ public class MiningPathPlan extends MiningPlan {
                 }
             }
             
-            // Se menos de 50% dos blocos restantes são navegáveis, considerar inviável
             if (remainingBlocks.size() > 0 && navigableBlocks < remainingBlocks.size() / 2) {
-                ProjectAmi.LOGGER.warn("[MiningPathPlan] Plan may be unviable: only {} of {} blocks are navigable", 
+                log.warn("[MiningPathPlan] Plan may be unviable: only {} of {} blocks are navigable", 
                     navigableBlocks, remainingBlocks.size());
                 return false;
             }
@@ -131,7 +118,6 @@ public class MiningPathPlan extends MiningPlan {
      */
     public BlockPos getNextAccessibleBlock(com.pedrorok.ami.entities.robot.RobotEntity robot) {
         if (pathfinder == null) {
-            // Fallback: usar getCurrentBlock() da classe base que já tem progressão correta
             return getCurrentBlock();
         }
         

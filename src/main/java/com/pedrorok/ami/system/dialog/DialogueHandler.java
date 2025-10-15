@@ -2,12 +2,14 @@ package com.pedrorok.ami.system.dialog;
 
 import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.client.gui.DialogueScreen;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class DialogueHandler {
 
     private static DialogueHandler INSTANCE;
@@ -86,7 +88,7 @@ public class DialogueHandler {
         if (node != null) {
             showDialogueNode(node);
         } else {
-            ProjectAmi.LOGGER.info("DialogueHandler: Dialogue '{}' not found!", dialogueId);
+            log.info("DialogueHandler: Dialogue '{}' not found!", dialogueId);
         }
     }
 

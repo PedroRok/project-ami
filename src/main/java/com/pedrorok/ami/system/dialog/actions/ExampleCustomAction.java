@@ -1,13 +1,8 @@
 package com.pedrorok.ami.system.dialog.actions;
 
-import com.pedrorok.ami.ProjectAmi;
+import lombok.extern.slf4j.Slf4j;
 
-/**
- * Exemplo de ação customizada - mostra como adicionar novas ações facilmente
- * Esta ação simplesmente loga uma mensagem quando executada
- * @author Rok, Pedro Lucas nmm. Created on 11/10/2025
- * @project project-ami
- */
+@Slf4j
 public class ExampleCustomAction implements DialogueAction {
     
     private final String message;
@@ -22,7 +17,7 @@ public class ExampleCustomAction implements DialogueAction {
     
     @Override
     public boolean execute(ActionContext context) {
-        ProjectAmi.LOGGER.info("CustomAction: {}", message);
+        log.info("CustomAction: {}", message);
         return true;
     }
 
