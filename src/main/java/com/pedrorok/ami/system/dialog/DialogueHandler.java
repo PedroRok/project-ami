@@ -28,7 +28,7 @@ public class DialogueHandler {
 
     private void registerDialogues() {
         DialogueNode greeting = new DialogueNode(
-                "<anim_happy>Olá <player>!<wait_2><br>Meu nome é AMI<br><wait_2>Eu sou um robô amigável aqui para te ajudar.<br>Como posso te ajudar hoje?",
+                "<anim_happy><mood_happy_3>Olá <player>!<wait_2><br>Meu nome é AMI<br><wait_2>Eu sou um robô amigável aqui para te ajudar.<br>Como posso te ajudar hoje?",
                 "Fazer uma pergunta",
                 "Ver itens disponíveis", 
                 "Sair"

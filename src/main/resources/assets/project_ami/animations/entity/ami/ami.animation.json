@@ -221,7 +221,7 @@
 		},
 		"animation.idle": {
 			"loop": true,
-			"animation_length": 3,
+			"animation_length": 2,
 			"override_previous_animation": true,
 			"bones": {
 				"body": {
@@ -250,30 +250,25 @@
 					"position": {
 						"0.0": {
 							"post": {
-								"vector": [0, 0.3, 0],
-								"easing": "linear"
+								"vector": [0, 0.3, 0]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.5": {
-							"vector": [0, 0, 0],
-							"easing": "linear"
+							"vector": [0, 0, 0]
 						},
 						"1.5": {
 							"pre": {
-								"vector": [0, 0.6, 0],
-								"easing": "linear"
+								"vector": [0, 0.6, 0]
 							},
 							"post": {
-								"vector": [0, 0.6, 0],
-								"easing": "linear"
+								"vector": [0, 0.6, 0]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"2.0": {
 							"post": {
-								"vector": [0, 0.3, 0],
-								"easing": "linear"
+								"vector": [0, 0.3, 0]
 							},
 							"lerp_mode": "catmullrom"
 						}
@@ -283,27 +278,22 @@
 					"position": {
 						"0.0": {
 							"post": {
-								"vector": [0, 0.3, 0],
-								"easing": "linear"
+								"vector": [0, 0.3, 0]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.7917": {
-							"vector": [0, 0, 0],
-							"easing": "easeInOutCubic"
+							"vector": [0, 0, 0]
 						},
 						"1.5": {
-							"vector": [0, 0.6, 0],
-							"easing": "easeInOutQuad"
+							"vector": [0, 0.6, 0]
 						},
 						"2.0": {
 							"pre": {
-								"vector": [0, 0.3, 0],
-								"easing": "linear"
+								"vector": [0, 0.3, 0]
 							},
 							"post": {
-								"vector": [0, 0.3, 0],
-								"easing": "linear"
+								"vector": [0, 0.3, 0]
 							},
 							"lerp_mode": "catmullrom"
 						}
@@ -330,8 +320,7 @@
 							"lerp_mode": "catmullrom"
 						},
 						"1.5": {
-							"vector": [0, 0.3, 0],
-							"easing": "easeInCirc"
+							"vector": [0, 0.3, 0]
 						},
 						"2.0": {
 							"pre": {

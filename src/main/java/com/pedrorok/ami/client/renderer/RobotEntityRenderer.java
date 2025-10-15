@@ -18,13 +18,30 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Rok, Pedro Lucas nmm. Created on 10/10/2025
  * @project project-ami
  */
 public class RobotEntityRenderer extends GeoEntityRenderer<RobotEntity> {
     private final ResourceLocation MODEL_TEXTURE = ProjectAmi.resource("textures/entity/ami/ami_texture.png");
-    private final ResourceLocation FACE_TEXTURE = ProjectAmi.resource("textures/entity/ami/eye_default.png");
+
+
+    private final ResourceLocation DEFAULT_EYE = ProjectAmi.resource("textures/entity/ami/eye_default.png");
+    private final ResourceLocation BLINK_EYE = ProjectAmi.resource("textures/entity/ami/eye_blink.png");
+
+    private static final Map<String, ResourceLocation> MOODS = new HashMap<>() {{
+        put("happy", ProjectAmi.resource("textures/entity/ami/eye_happy.png"));
+        put("sad", ProjectAmi.resource("textures/entity/ami/eye_sad.png"));
+    }};
+
+    public static void registerMoods(String mood, ResourceLocation texture) {
+        MOODS.put(mood, texture);
+    }
+
+    private int blinkTick = 0;
 
     public RobotEntityRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new RobotEntityModel());
@@ -40,8 +57,28 @@ public class RobotEntityRenderer extends GeoEntityRenderer<RobotEntity> {
                                   MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour
     ) {
         if (bone.getName().equals("face")) {
-            VertexConsumer faceConsumer = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(FACE_TEXTURE));
-            super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, faceConsumer, isReRender, partialTick, packedLight, packedOverlay, colour);
+            boolean blink = false;
+            if (animatable.tickCount % 60 == 0) {
+                blinkTick = 5;
+            }
+            if (blinkTick > 0) {
+                blinkTick--;
+                blink = true;
+            }
+
+            boolean hasMood = animatable.getCurrentMood() != null;
+            ResourceLocation displayEye = hasMood ? MOODS.get(animatable.getCurrentMood()) : null;
+            ResourceLocation eyeTexture = displayEye != null ? displayEye : DEFAULT_EYE;
+
+            eyeTexture = blink ? BLINK_EYE : eyeTexture;
+            super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource,  bufferSource.getBuffer(RenderType.entityTranslucentEmissive(eyeTexture)), isReRender, partialTick, packedLight, packedOverlay, colour);
+
+
+            if (hasMood && animatable.getLastMoodTick()< animatable.tickCount) {
+                animatable.playMood(null, 0);
+                blinkTick = 10;
+            }
+
             return;
         }
 

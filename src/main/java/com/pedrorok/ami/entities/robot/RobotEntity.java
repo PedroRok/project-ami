@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -70,6 +71,10 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	private final SimpleContainer inventory = new SimpleContainer(9);
 
 	private String currentDialogueAnimation = null;
+	@Getter
+	private String currentMood = null;
+	@Getter
+	private int lastMoodTick = 0;
 
 	public RobotEntity(EntityType<? extends RobotEntity> entityType, Level level) {
 		super(entityType, level);
@@ -258,6 +263,11 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 	public void playDialogueAnimation(String animationName) {
 		this.currentDialogueAnimation = "animation." + animationName;
 	}
+
+	public void playMood(@Nullable String mood, int sec) {
+		this.currentMood = mood;
+		this.lastMoodTick = this.tickCount + (sec * 20);
+	}
 	//endregion
 	
 	//region SaveData
@@ -287,5 +297,17 @@ public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarr
 				.ifPresent(data -> this.brain.setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), data));
 		}
 	}
+	//endregion
+
+
+	//region other animations
+
+	@Override
+	public boolean hurt(DamageSource source, float amount) {
+		playMood("sad", 1);
+		return super.hurt(source, amount);
+	}
+
+
 	//endregion
 }

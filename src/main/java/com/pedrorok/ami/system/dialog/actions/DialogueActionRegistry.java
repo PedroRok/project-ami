@@ -20,6 +20,7 @@ public class DialogueActionRegistry {
         registerAction("wait_", WaitAction::new);
         registerAction("br", BreakLineAction::new);
         registerAction("player", PlayerNameAction::new);
+        registerAction("mood_", MoodAction::new);
         
         // Exemplo de ação customizada - descomente para usar
         // registerAction("custom_", ExampleCustomAction::new);
@@ -51,6 +52,16 @@ public class DialogueActionRegistry {
                 if (prefix.equals("anim_") && baseAction instanceof AnimationAction) {
                     String animationName = command.substring(5); // Remove "anim_"
                     return AnimationAction.forAnimation(animationName);
+                }
+
+                // se for mood, cria com o nome específico
+                if (prefix.equals("mood_") && baseAction instanceof MoodAction) {
+                    String[] split = command.split("_");
+                    if (split.length == 3) {
+                        String moodName = split[1]; // Remove "mood_"
+                        int timePlaying = Integer.parseInt(split[2]);
+                        return MoodAction.forMood(moodName, timePlaying);
+                    }
                 }
                 
                 // Se for wait, cria com o tempo específico

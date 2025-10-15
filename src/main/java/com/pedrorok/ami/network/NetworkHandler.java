@@ -3,6 +3,7 @@ package com.pedrorok.ami.network;
 import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.network.packets.OpenDialoguePacket;
 import com.pedrorok.ami.network.packets.PlayAnimationPacket;
+import com.pedrorok.ami.network.packets.PlayMoodPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -30,6 +31,11 @@ public class NetworkHandler {
                 PlayAnimationPacket.TYPE,
                 PlayAnimationPacket.STREAM_CODEC,
                 PlayAnimationPacket::handle
+        );
+        registrar.playToClient(
+                PlayMoodPacket.TYPE,
+                PlayMoodPacket.STREAM_CODEC,
+                PlayMoodPacket::handle
         );
     }
 

@@ -247,7 +247,7 @@ public class DialogueScreen extends Screen {
             guiGraphics.fill(entityX - bgWidth/2 + 2, boxY + 2, entityX + bgWidth/2 - 2, boxY + boxHeight - 2, 0x55000000);
 
             // Debug visual
-            guiGraphics.drawString(this.font, "Entity: Colocar aqui ID da AMI", entityX - 40, boxY - 15, 0xFFFFFF, false);
+            guiGraphics.drawString(this.font, "AMI 0" + entity.getId(), entityX - 40, boxY - 15, 0xFFFFFF, false);
 
             // Renderiza a entidade olhando para o mouse
             try {
