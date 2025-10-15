@@ -8,6 +8,8 @@ import com.pedrorok.ami.client.gui.DialogueScreen;
  * @project project-ami
  */
 public class BreakLineAction implements DialogueAction {
+
+    public BreakLineAction(String ignore) {}
     
     @Override
     public boolean execute(ActionContext context) {

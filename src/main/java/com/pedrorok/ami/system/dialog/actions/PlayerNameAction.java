@@ -6,7 +6,9 @@ package com.pedrorok.ami.system.dialog.actions;
  * @project project-ami
  */
 public class PlayerNameAction implements DialogueAction {
-    
+
+    public PlayerNameAction(String ignore) {}
+
     @Override
     public boolean execute(ActionContext context) {
         return true;

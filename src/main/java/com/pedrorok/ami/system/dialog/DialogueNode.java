@@ -1,7 +1,6 @@
 package com.pedrorok.ami.system.dialog;
 
 import com.pedrorok.ami.system.dialog.actions.DialogueAction;
-import com.pedrorok.ami.system.dialog.actions.DialogueActionRegistry;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
