@@ -3,5 +3,6 @@
   "block.project_ami.ami_block": "Robot Body",
   "entity.project_ami.robot": "Robot",
   "item.project_ami.ami_head": "Robot Head",
-  "item.project_ami.ami_arm": "Robot Arm"
+  "item.project_ami.ami_arm": "Robot Arm",
+  "item.project_ami.ami_battery": "Robot Battery Full"
 }

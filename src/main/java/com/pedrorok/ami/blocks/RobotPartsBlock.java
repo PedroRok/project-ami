@@ -14,6 +14,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -64,7 +65,7 @@ public class RobotPartsBlock extends Block {
     );
 
     public RobotPartsBlock() {
-        super(BlockBehaviour.Properties.of().noOcclusion().dynamicShape().isViewBlocking((a, b, c) -> false).strength(2.0f).lightLevel((state) -> 1));
+        super(BlockBehaviour.Properties.of().noOcclusion().sound(SoundType.LANTERN).dynamicShape().isViewBlocking((a, b, c) -> false).strength(2.0f).lightLevel((state) -> 1));
         registerDefaultState(this.getStateDefinition().any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(HEAD, false)
@@ -121,9 +122,10 @@ public class RobotPartsBlock extends Block {
                 default -> state;
             };
             ctx.getLevel().setBlock(ctx.getClickedPos(), newState, 3);
-
             return InteractionResult.SUCCESS;
         }
+        ctx.getLevel().playSound(ctx.getPlayer(), ctx.getClickedPos(), SoundType.LANTERN.getPlaceSound(), ctx.getPlayer().getSoundSource(), 0.6F, 1.0F / (ctx.getLevel().getRandom().nextFloat() * 0.4F + 0.8F));
+
 
         return InteractionResult.PASS;
     }
