@@ -31,48 +31,33 @@ public record OctreeRegion(BlockPos min, BlockPos max) {
     
     public OctreeRegion[] subdivide() {
         BlockPos center = getCenter();
-        
+
         return new OctreeRegion[] {
-            // Octante 0: min até center
             new OctreeRegion(min, center),
-            
-            // Octante 1: center+1 até max (X)
             new OctreeRegion(
                 new BlockPos(center.getX() + 1, min.getY(), min.getZ()),
                 new BlockPos(max.getX(), center.getY(), center.getZ())
             ),
-            
-            // Octante 2: center+1 até max (Z)
             new OctreeRegion(
                 new BlockPos(min.getX(), min.getY(), center.getZ() + 1),
                 new BlockPos(center.getX(), center.getY(), max.getZ())
             ),
-            
-            // Octante 3: center+1 até max (X,Z)
             new OctreeRegion(
                 new BlockPos(center.getX() + 1, min.getY(), center.getZ() + 1),
                 new BlockPos(max.getX(), center.getY(), max.getZ())
             ),
-            
-            // Octante 4: center+1 até max (Y)
             new OctreeRegion(
                 new BlockPos(min.getX(), center.getY() + 1, min.getZ()),
                 new BlockPos(center.getX(), max.getY(), center.getZ())
             ),
-            
-            // Octante 5: center+1 até max (X,Y)
             new OctreeRegion(
                 new BlockPos(center.getX() + 1, center.getY() + 1, min.getZ()),
                 new BlockPos(max.getX(), max.getY(), center.getZ())
             ),
-            
-            // Octante 6: center+1 até max (Y,Z)
             new OctreeRegion(
                 new BlockPos(min.getX(), center.getY() + 1, center.getZ() + 1),
                 new BlockPos(center.getX(), max.getY(), max.getZ())
             ),
-            
-            // Octante 7: center+1 até max (X,Y,Z)
             new OctreeRegion(
                 new BlockPos(center.getX() + 1, center.getY() + 1, center.getZ() + 1),
                 max

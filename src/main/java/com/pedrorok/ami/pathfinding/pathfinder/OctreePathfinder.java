@@ -195,26 +195,27 @@ public class OctreePathfinder {
     }
     
     private double calculateCost(BlockPos from, BlockPos to, OctreeNode node) {
-        double baseCost = from.distSqr(to);
-        
+        double distance = Math.sqrt(from.distSqr(to));
+        double cost = distance;
+
         if (node != null && node.getState() == NodeState.MIXED) {
-            baseCost *= OctreeConfig.MIXED_NODE_COST_MULTIPLIER;
+            cost *= OctreeConfig.MIXED_NODE_COST_MULTIPLIER;
         }
-        
+
         double heightDiff = Math.abs(to.getY() - from.getY());
-        baseCost += heightDiff * OctreeConfig.HEIGHT_CHANGE_PENALTY;
-        
+        cost += heightDiff * OctreeConfig.HEIGHT_CHANGE_PENALTY;
+
         int dx = Math.abs(to.getX() - from.getX());
         int dy = Math.abs(to.getY() - from.getY());
         int dz = Math.abs(to.getZ() - from.getZ());
-        
+
         if (dx > 0 && dy > 0 && dz > 0) {
-            baseCost *= 1.2;
+            cost *= 1.2;
         } else if ((dx > 0 && dy > 0) || (dx > 0 && dz > 0) || (dy > 0 && dz > 0)) {
-            baseCost *= 1.1;
+            cost *= 1.1;
         }
-        
-        return Math.sqrt(baseCost);
+
+        return cost;
     }
     
     private List<BlockPos> reconstructPath(PathNode goalNode) {

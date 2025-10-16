@@ -16,7 +16,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class MiningPathfinder {
@@ -28,38 +27,41 @@ public class MiningPathfinder {
     }
     
     public MiningPathPlan planMining(MiningTaskData task, ServerLevel level, RobotEntity robot) {
-        log.info("[MiningPathfinder] Planning mining operation: {} blocks distance, pattern: {}", 
+        log.info("[MiningPathfinder] Planning mining operation: {} blocks distance, pattern: {}",
             task.getDistance(), task.getPattern());
-        
+
         OctreeRegion miningRegion = calculateMiningRegion(task);
         octree = new SpatialOctree(level);
         octree.build(miningRegion);
-        
+
+        if (pathfinder == null) {
+            this.pathfinder = new OctreePathfinder(octree);
+        }
+
         List<BlockPos> blocksToMine = generateMiningBlocks(task, robot);
-        
+
         log.info("[MiningPathfinder] Generated {} blocks with safe vertical ordering", blocksToMine.size());
-        
+
         validateSequenceSafety(blocksToMine, robot);
-        
+
         List<BlockPos> solidBlocksToMine = blocksToMine.stream()
             .filter(pos -> !level.getBlockState(pos).isAir())
             .toList();
-        
-        log.info("[MiningPathfinder] Generated {} total blocks, {} solid blocks to mine", 
+
+        log.info("[MiningPathfinder] Generated {} total blocks, {} solid blocks to mine",
             blocksToMine.size(), solidBlocksToMine.size());
-        
+
         if (solidBlocksToMine.isEmpty()) {
             log.warn("[MiningPathfinder] No solid blocks found to mine!");
             return new MiningPathPlan("Nenhum bloco sólido encontrado para minerar");
         }
-        
-        List<BlockPos> optimizedSequence = optimizeBlockSequence(solidBlocksToMine, task.getStartPos());
-        List<BlockPos> obstacles = findNavigationObstacles(task.getStartPos(), optimizedSequence, robot);
-        MiningPathPlan plan = new MiningPathPlan(optimizedSequence, obstacles, octree, this);
-        
-        log.info("[MiningPathfinder] Mining plan created: {} blocks, {} obstacles", 
-            optimizedSequence.size(), obstacles.size());
-        
+		
+	    List<BlockPos> obstacles = findNavigationObstacles(task.getStartPos(), solidBlocksToMine, robot);
+        MiningPathPlan plan = new MiningPathPlan(solidBlocksToMine, obstacles, octree, this);
+
+        log.info("[MiningPathfinder] Mining plan created: {} blocks, {} obstacles",
+            solidBlocksToMine.size(), obstacles.size());
+
         return plan;
     }
     
@@ -93,18 +95,18 @@ public class MiningPathfinder {
     private List<BlockPos> generateMiningBlocks(MiningTaskData task, RobotEntity robot) {
         List<BlockPos> blocks = new ArrayList<>();
         int minHeight = getMinimumTunnelHeight(robot);
-        
-        for (int distance = 0; distance < task.getDistance(); distance++) {
+
+        for (int distance = 1; distance <= task.getDistance(); distance++) {
             BlockPos layerBase = task.getStartPos().offset(
                 task.getDirection().getStepX() * distance,
                 task.getDirection().getStepY() * distance,
                 task.getDirection().getStepZ() * distance
             );
-            
+
             List<BlockPos> layerBlocks = generateLayerBlocks(layerBase, task.getPattern(), robot, minHeight, task.getDirection());
             blocks.addAll(layerBlocks);
         }
-        
+
         return blocks;
     }
     
@@ -177,58 +179,7 @@ public class MiningPathfinder {
         double robotHeight = robot.getBoundingBox().getYsize();
         return (int) Math.ceil(robotHeight);
     }
-    
-    private List<BlockPos> optimizeBlockSequence(List<BlockPos> blocks, BlockPos start) {
-        List<BlockPos> optimizedBlocks = blocks;
-        
-        if (octree != null) {
-            optimizedBlocks = optimizeWithOctree(blocks, start);
-        }
-        
-        return optimizedBlocks;
-    }
-    
-    private List<BlockPos> optimizeWithOctree(List<BlockPos> blocks, BlockPos start) {
-        Map<Boolean, List<BlockPos>> partitioned = blocks.stream()
-            .collect(Collectors.partitioningBy(pos -> octree.findNode(pos) != null));
-        
-        List<BlockPos> blocksInOctree = partitioned.get(true);
-        List<BlockPos> blocksOutsideOctree = partitioned.get(false);
-        
-        List<BlockPos> result = new ArrayList<>();
-        
-        if (!blocksInOctree.isEmpty()) {
-            Map<OctreeNode, List<BlockPos>> blocksByNode = blocksInOctree.stream()
-                .collect(Collectors.groupingBy(pos -> octree.findNode(pos)));
-            
-            List<OctreeNode> sortedNodes = blocksByNode.keySet().stream()
-                .sorted(Comparator.comparingDouble(node -> 
-                    node.getRegion().getCenter().distSqr(start)))
-                .toList();
-            
-            for (OctreeNode node : sortedNodes) {
-                BlockPos nodeCenter = node.getRegion().getCenter();
-                List<BlockPos> nodeBlocks = blocksByNode.get(node);
-                
-                nodeBlocks.sort(Comparator.comparingDouble(
-                    pos -> pos.distSqr(nodeCenter)
-                ));
-                
-                result.addAll(nodeBlocks);
-            }
-        }
-        
-        if (!blocksOutsideOctree.isEmpty()) {
-            blocksOutsideOctree.sort(Comparator.comparingDouble(pos -> pos.distSqr(start)));
-            result.addAll(blocksOutsideOctree);
-            
-            log.warn("[MiningPathfinder] {} blocos fora da octree foram adicionados ao final", 
-                blocksOutsideOctree.size());
-        }
-        
-        return result;
-    }
-    
+	
     private void validateSequenceSafety(List<BlockPos> blocks, RobotEntity robot) {
         Set<BlockPos> mined = new HashSet<>();
         int robotHeight = (int) Math.ceil(robot.getBoundingBox().getYsize());

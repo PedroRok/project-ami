@@ -19,20 +19,27 @@ import net.minecraft.world.phys.Vec3;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
 @RequiredArgsConstructor
 public class MiningState implements StateHandler {
     private final RobotEntity robot;
-    
+
     private int breakingProgress = 0;
     private BlockPos lastAttemptedBlock = null;
     private int failedAttempts = 0;
     private static final int MAX_FAILED_ATTEMPTS = 3;
     private static final int BREAK_TIME = 20;
     private Set<BlockPos> temporarilyBlocked = new HashSet<>();
+    private Map<BlockPos, Boolean> lineOfSightCache = new HashMap<>();
+    private int cacheInvalidationTick = 0;
+    private int lastCompletedCount = 0;
+    private int consecutiveBlockedAttempts = 0;
+    private static final int MAX_CONSECUTIVE_BLOCKED = 15;
     
     @Override
     public void enter(ActionContext context) {
@@ -66,18 +73,38 @@ public class MiningState implements StateHandler {
         }
         
         BlockPos currentTarget = plan.getNextBlockForRobot(robot, 20, temporarilyBlocked);
-        
+
         if (currentTarget == null) {
             log.warn("No accessible blocks remaining");
             completeMining();
             return ActionState.IDLE;
         }
-        
+
         if (!currentTarget.equals(lastAttemptedBlock)) {
+            if (!hasLineOfSight(currentTarget)) {
+                log.debug("Block {} has no line of sight, marking as temporarily blocked", currentTarget);
+                temporarilyBlocked.add(currentTarget);
+                consecutiveBlockedAttempts++;
+
+                if (consecutiveBlockedAttempts >= MAX_CONSECUTIVE_BLOCKED) {
+                    log.info("Too many consecutive blocked blocks ({}), clearing blacklist to retry", consecutiveBlockedAttempts);
+                    temporarilyBlocked.clear();
+                    consecutiveBlockedAttempts = 0;
+                    lineOfSightCache.clear();
+                }
+
+                if (temporarilyBlocked.size() > 50) {
+                    temporarilyBlocked.clear();
+                }
+
+                return ActionState.MINING;
+            }
+
             breakingProgress = 0;
             lastAttemptedBlock = currentTarget;
             failedAttempts = 0;
-            robot.getBrain().setMemory(MemoryModuleType.WALK_TARGET, 
+            consecutiveBlockedAttempts = 0;
+            robot.getBrain().setMemory(MemoryModuleType.WALK_TARGET,
                 new WalkTarget(currentTarget, 1.0F, 0));
         }
         
@@ -126,18 +153,26 @@ public class MiningState implements StateHandler {
         if (breakingProgress >= BREAK_TIME) {
             log.info("Breaking block: {}", currentTarget);
             robot.level().destroyBlock(currentTarget, true);
-            
+
             consumeToolDurability();
             plan.markBlockCompletedAt(currentTarget);
             miningTask.incrementProgress(robot);
-            
+
             breakingProgress = 0;
             lastAttemptedBlock = null;
             temporarilyBlocked.remove(currentTarget);
-            temporarilyBlocked.clear();
-            
+
+            int currentCompleted = plan.getCompletedBlocks();
+            if (currentCompleted > 0 && currentCompleted % 9 == 0 && currentCompleted != lastCompletedCount) {
+                log.info("Completed layer ({} blocks), clearing blacklist for next layer", currentCompleted);
+                temporarilyBlocked.clear();
+                lineOfSightCache.clear();
+                consecutiveBlockedAttempts = 0;
+                lastCompletedCount = currentCompleted;
+            }
+
             if (plan.getCompletedBlocks() % 5 == 0) {
-                String message = String.format("<green>[A.M.I.]</green> <gray>Progress: %d/%d blocks</gray>", 
+                String message = String.format("<green>[A.M.I.]</green> <gray>Progress: %d/%d blocks</gray>",
                     plan.getCompletedBlocks(), plan.getTotalBlocks());
                 sendMessageToOwner(message);
             }
@@ -163,21 +198,28 @@ public class MiningState implements StateHandler {
     }
     
     private boolean hasLineOfSight(BlockPos target) {
-        Vec3 robotEyes = robot.getEyePosition();
-        Vec3 targetCenter = Vec3.atCenterOf(target);
-        
-        ClipContext clipContext = new ClipContext(
-            robotEyes,
-            targetCenter,
-            ClipContext.Block.COLLIDER,
-            ClipContext.Fluid.NONE,
-            robot
-        );
-        
-        BlockHitResult hit = robot.level().clip(clipContext);
-        BlockPos hitPos = hit.getBlockPos();
-        
-        return hitPos.equals(target);
+        if (robot.tickCount - cacheInvalidationTick > 40) {
+            lineOfSightCache.clear();
+            cacheInvalidationTick = robot.tickCount;
+        }
+
+        return lineOfSightCache.computeIfAbsent(target, pos -> {
+            Vec3 robotEyes = robot.getEyePosition();
+            Vec3 targetCenter = Vec3.atCenterOf(pos);
+
+            ClipContext clipContext = new ClipContext(
+                robotEyes,
+                targetCenter,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                robot
+            );
+
+            BlockHitResult hit = robot.level().clip(clipContext);
+            BlockPos hitPos = hit.getBlockPos();
+
+            return hitPos.equals(target);
+        });
     }
     
     private void completeMining() {

@@ -45,8 +45,7 @@ public class MiningPlan {
         
         log.warn("[MiningPlan] Plano inviável: {}", failureReason);
     }
-    
-    // Getters
+
     public List<BlockPos> getBlocksToMine() { return blocksToMine; }
     public List<BlockPos> getObstaclesInPath() { return obstaclesInPath; }
     public int getEstimatedTime() { return estimatedTime; }
@@ -57,35 +56,25 @@ public class MiningPlan {
     public int getCurrentBlockIndex() { return currentBlockIndex; }
     
     /**
-     * Retorna o próximo bloco a ser minerado
+     * Retorna o próximo bloco a ser minerado seguindo ordem estrita das camadas.
+     * Não usa busca por proximidade para evitar pulos entre camadas.
      */
     public BlockPos getNextBlockForRobot(RobotEntity robot, int searchRadius, Set<BlockPos> blacklist) {
         if (currentBlockIndex >= blocksToMine.size()) {
             return null;
         }
-        
-        BlockPos robotPos = robot.blockPosition();
-        int searchLimit = Math.min(currentBlockIndex + searchRadius, blocksToMine.size());
-        
-        BlockPos closestBlock = null;
-        double closestDistance = Double.MAX_VALUE;
-        
-        for (int i = currentBlockIndex; i < searchLimit; i++) {
+
+        for (int i = currentBlockIndex; i < blocksToMine.size(); i++) {
             BlockPos candidate = blocksToMine.get(i);
-            
+
             if (blacklist != null && blacklist.contains(candidate)) {
                 continue;
             }
-            
-            double distance = robotPos.distSqr(candidate);
-            
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestBlock = candidate;
-            }
+
+            return candidate;
         }
-        
-        return closestBlock != null ? closestBlock : (currentBlockIndex < blocksToMine.size() ? blocksToMine.get(currentBlockIndex) : null);
+
+        return null;
     }
     
     public void markBlockCompletedAt(BlockPos pos) {
@@ -150,15 +139,14 @@ public class MiningPlan {
      */
     public boolean validatePlan(Level level) {
         if (!isViable) return false;
-        
-        // Verificar se todos os blocos ainda existem e são mineráveis
+
         for (BlockPos block : blocksToMine) {
             if (level.getBlockState(block).isAir()) {
                 log.warn("[MiningPlan] Bloco {} já foi minerado!", block);
                 return false;
             }
         }
-        
+
         return true;
     }
     
@@ -168,26 +156,22 @@ public class MiningPlan {
      */
     private static List<BlockPos> smartSort(List<BlockPos> blocks, MiningTaskData task, Level level) {
         return switch (task.getPattern()) {
-            case STRAIGHT -> 
-                // Já é sequencial, ordenar por distância do startPos
+            case STRAIGHT ->
                 blocks.stream()
-                    .sorted(Comparator.comparingDouble(pos -> 
+                    .sorted(Comparator.comparingDouble(pos ->
                         pos.distSqr(task.getStartPos())))
                     .toList();
-                
-            case TUNNEL_2X1, TUNNEL_3X3 -> 
-                // Minerar em camadas, cada camada do centro para fora
+
+            case TUNNEL_2X1, TUNNEL_3X3 ->
                 sortTunnelBlocks(blocks, task);
-                
-            case STAIRCASE -> 
-                // Escada: minerar de cima para baixo (evita queda)
+
+            case STAIRCASE ->
                 blocks.stream()
                     .sorted(Comparator.comparingInt((BlockPos pos) -> pos.getY()).reversed()
                         .thenComparingDouble(pos -> pos.distSqr(task.getStartPos())))
                     .toList();
-                
-            case BRANCH -> 
-                // Branch: alternar entre corredor principal e galhos
+
+            case BRANCH ->
                 sortBranchBlocks(blocks, task);
         };
     }
@@ -199,29 +183,23 @@ public class MiningPlan {
     private static List<BlockPos> sortTunnelBlocks(List<BlockPos> blocks, MiningTaskData task) {
         Direction dir = task.getDirection();
         BlockPos start = task.getStartPos();
-        
-        // Agrupar por camadas (distância na direção principal)
+
         Map<Integer, List<BlockPos>> layers = blocks.stream()
             .collect(Collectors.groupingBy(pos -> {
-                // Distância na direção do túnel (absoluta)
                 return Math.abs(
                     (pos.getX() - start.getX()) * dir.getStepX() +
                     (pos.getZ() - start.getZ()) * dir.getStepZ()
                 );
             }));
-        
-        // Ordenar camadas e dentro de cada camada do centro para fora
+
         return layers.entrySet().stream()
-            .sorted(Map.Entry.comparingByKey()) // Camadas por ordem de distância
+            .sorted(Map.Entry.comparingByKey())
             .flatMap(entry -> {
                 List<BlockPos> layerBlocks = entry.getValue();
-                
-                // Encontrar centro da camada
                 BlockPos layerCenter = findLayerCenter(layerBlocks);
-                
-                // Ordenar blocos da camada por distância do centro
+
                 return layerBlocks.stream()
-                    .sorted(Comparator.comparingDouble(pos -> 
+                    .sorted(Comparator.comparingDouble(pos ->
                         pos.distSqr(layerCenter)));
             })
             .toList();
@@ -235,40 +213,35 @@ public class MiningPlan {
         Direction dir = task.getDirection();
         BlockPos start = task.getStartPos();
         Direction perpendicular = dir.getClockWise();
-        
-        // Separar em corredor principal e galhos
+
         List<BlockPos> mainCorridor = new ArrayList<>();
         List<BlockPos> branches = new ArrayList<>();
-        
+
         for (BlockPos pos : blocks) {
             int perpDist = Math.abs(
                 (pos.getX() - start.getX()) * perpendicular.getStepX() +
                 (pos.getZ() - start.getZ()) * perpendicular.getStepZ()
             );
-            
+
             if (perpDist == 0) {
-                mainCorridor.add(pos); // Está no corredor principal
+                mainCorridor.add(pos);
             } else {
-                branches.add(pos); // Está em um galho
+                branches.add(pos);
             }
         }
-        
-        // Ordenar corredor por distância do start
+
         mainCorridor.sort(Comparator.comparingDouble(pos -> pos.distSqr(start)));
-        
-        // Ordenar galhos por distância do ponto mais próximo no corredor
+
         branches.sort(Comparator.comparingDouble(pos -> {
-            // Encontrar distância do ponto mais próximo no corredor
             return mainCorridor.stream()
                 .mapToDouble(pos::distSqr)
                 .min()
                 .orElse(Double.MAX_VALUE);
         }));
-        
-        // Mesclar: corredor principal primeiro, depois galhos
+
         List<BlockPos> result = new ArrayList<>(mainCorridor);
         result.addAll(branches);
-        
+
         return result;
     }
     
@@ -288,45 +261,38 @@ public class MiningPlan {
     
     private static BlockPos calculateTunnelBlock(BlockPos basePos, net.minecraft.core.Direction direction, int width, int blockIndex) {
         if (width == 2) {
-            // Túnel 2x1: alternar entre linha principal e superior
             if (blockIndex % 2 == 0) {
                 return basePos;
             } else {
                 return basePos.above();
             }
         } else if (width == 3) {
-            // Túnel 3x3: minerar em um padrão 3x3
             int blockInRow = blockIndex % 9;
             net.minecraft.core.Direction perpendicular = direction.getClockWise();
-            
+
             if (blockInRow < 3) {
-                // Linha esquerda (-1 perpendicular)
                 int height = blockInRow;
                 return basePos.relative(perpendicular.getOpposite()).above(height);
             } else if (blockInRow < 6) {
-                // Linha centro (sem deslocamento lateral)
                 int height = blockInRow - 3;
                 return basePos.above(height);
             } else {
-                // Linha direita (+1 perpendicular)
                 int height = blockInRow - 6;
                 return basePos.relative(perpendicular).above(height);
             }
         }
-        
+
         return basePos;
     }
-    
+
     private static BlockPos calculateStaircaseBlock(BlockPos basePos, int blockIndex) {
-        // Escada descendente - a cada 3 blocos desce 1
         if (blockIndex % 3 == 0) {
             return basePos.below();
         }
         return basePos;
     }
-    
+
     private static BlockPos calculateBranchBlock(BlockPos basePos, net.minecraft.core.Direction direction, int blockIndex) {
-        // Branch mining - criar galhos laterais a cada 5 blocos
         int cycle = blockIndex % 10;
         if (cycle < 3) {
             return basePos.relative(direction.getClockWise(), cycle);
@@ -335,30 +301,26 @@ public class MiningPlan {
         }
         return basePos;
     }
-    
+
     private static List<BlockPos> findNavigationObstacles(BlockPos startPos, List<BlockPos> targetBlocks, Level level) {
         List<BlockPos> obstacles = new ArrayList<>();
-        
-        // Simplificado: verificar se há obstáculos entre startPos e o primeiro bloco
+
         if (!targetBlocks.isEmpty()) {
             BlockPos firstBlock = targetBlocks.get(0);
-            
-            // Verificar linha de visão simples
             BlockPos current = startPos;
             while (!current.equals(firstBlock)) {
                 if (!level.getBlockState(current).isAir()) {
                     obstacles.add(current);
                 }
-                
-                // Mover em direção ao primeiro bloco
+
                 int dx = Integer.compare(firstBlock.getX(), current.getX());
                 int dy = Integer.compare(firstBlock.getY(), current.getY());
                 int dz = Integer.compare(firstBlock.getZ(), current.getZ());
-                
+
                 current = current.offset(dx, dy, dz);
             }
         }
-        
+
         return obstacles;
     }
 }

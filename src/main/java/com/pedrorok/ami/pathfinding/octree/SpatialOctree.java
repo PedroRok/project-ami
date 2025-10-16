@@ -110,11 +110,11 @@ public class SpatialOctree {
     
     public List<OctreeNode> getNeighbors(OctreeNode node) {
         List<OctreeNode> neighbors = new ArrayList<>();
-        
-        if (node == null || node.isLeaf()) {
+
+        if (node == null) {
             return neighbors;
         }
-        
+
         if (node.isLeaf()) {
             neighbors.addAll(findLeafNeighbors(node));
         } else {
@@ -122,7 +122,7 @@ public class SpatialOctree {
                 neighbors.addAll(getNeighbors(child));
             }
         }
-        
+
         return neighbors;
     }
     
