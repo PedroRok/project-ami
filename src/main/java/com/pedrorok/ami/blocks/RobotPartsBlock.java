@@ -4,7 +4,6 @@ import com.pedrorok.ami.entities.robot.RobotEntity;
 import com.pedrorok.ami.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -21,8 +20,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -41,7 +38,7 @@ public class RobotPartsBlock extends Block {
     public static final BooleanProperty HEAD = BooleanProperty.create("head");
     public static final BooleanProperty LEFT_ARM = BooleanProperty.create("left_arm");
     public static final BooleanProperty RIGHT_ARM = BooleanProperty.create("right_arm");
-    public static final BooleanProperty REACTOR = BooleanProperty.create("reactor");
+    public static final BooleanProperty BATTERY = BooleanProperty.create("battery");
 
 
     private static final VoxelShape BASE = Block.box(5, 0, 6, 11, 1, 10);
@@ -73,12 +70,12 @@ public class RobotPartsBlock extends Block {
                 .setValue(HEAD, false)
                 .setValue(LEFT_ARM, false)
                 .setValue(RIGHT_ARM, false)
-                .setValue(REACTOR, false));
+                .setValue(BATTERY, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, HEAD, LEFT_ARM, RIGHT_ARM, REACTOR);
+        builder.add(FACING, HEAD, LEFT_ARM, RIGHT_ARM, BATTERY);
         super.createBlockStateDefinition(builder);
     }
 
@@ -102,7 +99,7 @@ public class RobotPartsBlock extends Block {
             boolean partFill = switch (item) {
                 case "head" -> state.getValue(HEAD);
                 case "arm" -> state.getValue(LEFT_ARM) && state.getValue(RIGHT_ARM);
-                case "reactor" -> state.getValue(REACTOR);
+                case "battery" -> state.getValue(BATTERY);
                 default -> true;
             };
             if (partFill) {
@@ -120,7 +117,7 @@ public class RobotPartsBlock extends Block {
                         yield state.setValue(RIGHT_ARM, true);
                     }
                 }
-                case "reactor" -> state.setValue(REACTOR, true);
+                case "battery" -> state.setValue(BATTERY, true);
                 default -> state;
             };
             ctx.getLevel().setBlock(ctx.getClickedPos(), newState, 3);
@@ -132,7 +129,7 @@ public class RobotPartsBlock extends Block {
     }
 
     private void tryAssembleRobot(Level level, Player player, BlockPos pos, BlockState state) {
-        if (!state.getValue(HEAD) || !state.getValue(LEFT_ARM) || !state.getValue(RIGHT_ARM) /*|| !state.getValue(REACTOR)*/)
+        if (!state.getValue(HEAD) || !state.getValue(LEFT_ARM) || !state.getValue(RIGHT_ARM) || !state.getValue(BATTERY))
             return;
         level.removeBlock(pos, false);
 

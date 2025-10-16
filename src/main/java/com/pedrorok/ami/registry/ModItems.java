@@ -26,4 +26,8 @@ public class ModItems {
 	public static final DeferredHolder<Item, Item> AMI_HEAD = ITEMS.register("ami_head",
 			() -> new AmiPartItem("head")
 	);
+
+	public static final DeferredHolder<Item, Item> AMI_BATTERY = ITEMS.register("ami_battery",
+			() -> new AmiPartItem("battery")
+	);
 }

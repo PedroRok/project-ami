@@ -97,28 +97,28 @@
       "apply": { "model": "project_ami:block/ami_right_arm", "y": 90 }
     },
     {
-      "when": { "reactor": "true", "facing": "down" },
-      "apply": { "model": "project_ami:block/ami_reactor", "x": 90 }
+      "when": { "battery": "true", "facing": "down" },
+      "apply": { "model": "project_ami:block/ami_battery", "x": 90 }
     },
     {
-      "when": { "reactor": "true", "facing": "up" },
-      "apply": { "model": "project_ami:block/ami_reactor", "x": 270 }
+      "when": { "battery": "true", "facing": "up" },
+      "apply": { "model": "project_ami:block/ami_battery", "x": 270 }
     },
     {
-      "when": { "reactor": "true", "facing": "north" },
-      "apply": { "model": "project_ami:block/ami_reactor" }
+      "when": { "battery": "true", "facing": "north" },
+      "apply": { "model": "project_ami:block/ami_battery" }
     },
     {
-      "when": { "reactor": "true", "facing": "south" },
-      "apply": { "model": "project_ami:block/ami_reactor", "y": 180 }
+      "when": { "battery": "true", "facing": "south" },
+      "apply": { "model": "project_ami:block/ami_battery", "y": 180 }
     },
     {
-      "when": { "reactor": "true", "facing": "west" },
-      "apply": { "model": "project_ami:block/ami_reactor", "y": 270 }
+      "when": { "battery": "true", "facing": "west" },
+      "apply": { "model": "project_ami:block/ami_battery", "y": 270 }
     },
     {
-      "when": { "reactor": "true", "facing": "east" },
-      "apply": { "model": "project_ami:block/ami_reactor", "y": 90 }
+      "when": { "battery": "true", "facing": "east" },
+      "apply": { "model": "project_ami:block/ami_battery", "y": 90 }
     }
   ]
 }

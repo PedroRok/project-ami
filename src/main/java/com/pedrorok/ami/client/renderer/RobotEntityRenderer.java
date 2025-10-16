@@ -28,6 +28,9 @@ import java.util.Map;
 public class RobotEntityRenderer extends GeoEntityRenderer<RobotEntity> {
     private final ResourceLocation MODEL_TEXTURE = ProjectAmi.resource("textures/entity/ami/ami_texture.png");
 
+    private final ResourceLocation BATTERY_FULL = ProjectAmi.resource("textures/block/battery_full.png");
+    private final ResourceLocation BATTERY_EMPTY = ProjectAmi.resource("textures/item/battery_empty.png");
+
 
     private final ResourceLocation DEFAULT_EYE = ProjectAmi.resource("textures/entity/ami/eye_default.png");
     private final ResourceLocation BLINK_EYE = ProjectAmi.resource("textures/entity/ami/eye_blink.png");
@@ -82,6 +85,12 @@ public class RobotEntityRenderer extends GeoEntityRenderer<RobotEntity> {
 
             return;
         }
+
+        if (bone.getName().equals("battery")) {
+            super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource,  bufferSource.getBuffer(RenderType.entityTranslucentEmissive(animatable.getEnergy().isOutOfEnergy() ? BATTERY_EMPTY : BATTERY_FULL)), isReRender, partialTick, packedLight, packedOverlay, colour);
+            return;
+        }
+
         if (bone.getName().equals("right-hand")) {
             super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer,
                     isReRender, partialTick, packedLight, packedOverlay, colour);

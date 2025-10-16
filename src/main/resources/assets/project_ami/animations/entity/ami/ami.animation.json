@@ -506,22 +506,22 @@
 			}
 		},
 		"animation.spawn": {
-			"animation_length": 3,
+			"animation_length": 3.5,
 			"bones": {
 				"body": {
 					"position": {
-						"0.0": {
+						"0.5": {
 							"vector": [0, -2, 0]
 						},
-						"1.0": {
+						"1.5": {
 							"vector": [0, 0, 0],
 							"easing": "easeOutBack"
 						},
-						"1.5": {
+						"2.0": {
 							"vector": [0, -1, 0],
 							"easing": "easeInOutCirc"
 						},
-						"2.0": {
+						"2.5": {
 							"pre": {
 								"vector": [0, 0, 0]
 							},
@@ -530,13 +530,13 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"2.5": {
+						"3.0": {
 							"post": {
 								"vector": [0, -1, 0]
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"3.0": {
+						"3.5": {
 							"post": {
 								"vector": [0, 0, 0]
 							},
@@ -546,39 +546,39 @@
 				},
 				"left-arm": {
 					"rotation": {
-						"0.0": {
+						"0.5": {
 							"vector": [0, 0, 0]
 						},
-						"2.0417": {
+						"2.5417": {
 							"vector": [0, 0, 0]
 						},
-						"2.125": {
+						"2.625": {
 							"vector": [0, 0, -2.5]
 						},
-						"2.2083": {
+						"2.7083": {
 							"vector": [0, 0, 0]
 						}
 					},
 					"position": {
-						"0.0": {
+						"0.5": {
 							"vector": [-1, 0, 0.5]
 						},
-						"1.0": {
+						"1.5": {
 							"vector": [-1, 0, 0.5]
 						},
-						"2.0417": {
+						"2.5417": {
 							"vector": [-1, 0, 0.5]
 						},
-						"2.125": {
+						"2.625": {
 							"vector": [-1.2, 0.1, 0.5]
 						},
-						"2.2083": {
+						"2.7083": {
 							"vector": [-1.53, 0.07, 0.5]
 						},
-						"2.375": {
+						"2.875": {
 							"vector": [-1, 0, 0.5]
 						},
-						"2.75": {
+						"3.25": {
 							"vector": [0, 0, 0],
 							"easing": "easeOutBack"
 						}
@@ -586,17 +586,17 @@
 				},
 				"right-arm": {
 					"position": {
-						"0.0": {
+						"0.5": {
 							"vector": [1, 0, 0.5]
 						},
-						"1.0": {
+						"1.5": {
 							"vector": [1, 0, 0.5]
 						},
-						"2.0833": {
+						"2.5833": {
 							"vector": [1, 0, 0.5],
 							"easing": "easeOutExpo"
 						},
-						"2.5": {
+						"3.0": {
 							"vector": [0, 0.3, 0],
 							"easing": "easeOutBack"
 						}
@@ -604,53 +604,53 @@
 				},
 				"head": {
 					"position": {
-						"0.0": {
-							"vector": [0, -1, 0]
-						},
-						"1.0": {
+						"0.5": {
 							"vector": [0, -1, 0]
 						},
 						"1.5": {
+							"vector": [0, -1, 0]
+						},
+						"2.0": {
 							"vector": [0, 0, 0],
 							"easing": "easeInOutCubic"
 						},
-						"2.0": {
+						"2.5": {
 							"vector": [0, 0.3, 0]
 						},
-						"3.0": {
+						"3.5": {
 							"vector": [0, 0, 0]
 						}
 					}
 				},
 				"body-solo": {
 					"rotation": {
-						"2.0": {
+						"2.5": {
 							"vector": [0, 0, 0]
 						},
-						"2.125": {
+						"2.625": {
 							"vector": [0, 0, -2.5],
 							"easing": "easeInCirc"
 						},
-						"2.25": {
+						"2.75": {
 							"vector": [0, 0, 0]
 						},
-						"2.375": {
+						"2.875": {
 							"vector": [0, 0, 2.5],
 							"easing": "easeInCirc"
 						},
-						"2.4583": {
+						"2.9583": {
 							"vector": [0, 0, 0]
 						},
-						"2.8333": {
+						"3.3333": {
 							"vector": [0, 0, 0],
 							"easing": "easeInOutSine"
 						}
 					},
 					"position": {
-						"0.0": {
+						"0.5": {
 							"vector": [0, 0, 0]
 						},
-						"1.0": {
+						"1.5": {
 							"pre": {
 								"vector": [0, 0, 0]
 							},
@@ -659,23 +659,35 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"1.5": {
-							"vector": [0, 0, 0]
-						},
 						"2.0": {
 							"vector": [0, 0, 0]
 						},
-						"2.2083": {
+						"2.5": {
+							"vector": [0, 0, 0]
+						},
+						"2.7083": {
 							"vector": [-0.5, 0, 0],
 							"easing": "easeInCirc"
 						},
-						"2.4167": {
+						"2.9167": {
 							"vector": [0.5, 0, 0],
 							"easing": "easeInCirc"
 						},
-						"2.8333": {
+						"3.3333": {
 							"vector": [0, 0, 0],
 							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"batery-slot-cover": {
+					"rotation": {
+						"0.0": {
+							"vector": [-132.5, 0, 0]
+						},
+						"0.4167": {
+							"vector": [0, 0, 0],
+							"easing": "easeInBounce",
+							"easingArgs": [0.1]
 						}
 					}
 				}
