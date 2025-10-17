@@ -9,9 +9,7 @@ import com.pedrorok.ami.network.packets.OpenDialoguePacket;
 import com.pedrorok.ami.pathfinding.mining.MiningPathPlan;
 import com.pedrorok.ami.registry.ModMemoryModuleTypes;
 import com.pedrorok.ami.system.dialog.DialogueAnimationHelper;
-import com.pedrorok.ami.system.dialog.DialogueHandler;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -22,11 +20,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -36,7 +30,6 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
@@ -44,315 +37,310 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.tslat.smartbrainlib.api.SmartBrainOwner;
-import net.tslat.smartbrainlib.api.core.BrainActivityGroup;
 import net.tslat.smartbrainlib.api.core.SmartBrainProvider;
-import net.tslat.smartbrainlib.api.core.sensor.ExtendedSensor;
-import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyLivingEntitySensor;
-import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyPlayersSensor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.animation.AnimationState;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class RobotEntity extends PathfinderMob implements RobotAi, InventoryCarrier, GeoEntity, DialogueAnimationHelper.DialogueAnimatable, IHaveEnergy {
-	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-	
-	@Getter private final RobotEnergy energy;
-	private final SimpleContainer inventory = new SimpleContainer(9);
-	@Getter private final RobotActionStateMachine actionStateMachine;
-	
-	@Getter private String currentDialogueAnimation = null;
-	@Getter private String currentMood = null;
-	@Getter private int lastMoodTick = 0;
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
-	public RobotEntity(EntityType<? extends RobotEntity> entityType, Level level) {
-		super(entityType, level);
-		this.energy = new RobotEnergy(this);
-		this.actionStateMachine = new RobotActionStateMachine(this);
-		this.moveControl = new FlyingMoveControl(this, 20, true);
-	}
-	
-	public static AttributeSupplier.Builder createAttributes() {
-		return Mob.createMobAttributes()
-			.add(Attributes.MAX_HEALTH, 10.0D)
-			.add(Attributes.FLYING_SPEED, 0.1F)
-			.add(Attributes.MOVEMENT_SPEED, 0.1F)
-			.add(Attributes.ATTACK_DAMAGE, 2.0D);
-	}
-	
-	@Override
-	protected InteractionResult mobInteract(Player player, InteractionHand hand) {
-		this.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
-		this.setOwner(player);
-		
-		if (!this.level().isClientSide && hand == InteractionHand.MAIN_HAND) {
-			if (player instanceof ServerPlayer serverPlayer) {
-				NetworkHandler.sendToPlayer(
-						new OpenDialoguePacket("greeting", this.getId()),
-						serverPlayer
-				);
-			}
-			return InteractionResult.SUCCESS;
-		}
+    @Getter
+    private final RobotEnergy energy;
+    private final SimpleContainer inventory = new SimpleContainer(9);
+    @Getter
+    private final RobotActionStateMachine actionStateMachine;
 
-		return super.mobInteract(player, hand);
-	}
-	
-	@Override
-	public boolean hurt(DamageSource source, float amount) {
-		playMood("sad", 1);
-		return super.hurt(source, amount);
-	}
+    @Getter
+    private String currentDialogueAnimation = null;
+    @Getter
+    private String currentMood = null;
+    @Getter
+    private int lastMoodTick = 0;
+
+    public RobotEntity(EntityType<? extends RobotEntity> entityType, Level level) {
+        super(entityType, level);
+        this.energy = new RobotEnergy(this);
+        this.actionStateMachine = new RobotActionStateMachine(this);
+        this.moveControl = new FlyingMoveControl(this, 20, true);
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 10.0D)
+                .add(Attributes.FLYING_SPEED, 0.1F)
+                .add(Attributes.MOVEMENT_SPEED, 0.1F)
+                .add(Attributes.ATTACK_DAMAGE, 2.0D);
+    }
+
+    @Override
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        this.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
+        this.setOwner(player);
+
+        if (!this.level().isClientSide && hand == InteractionHand.MAIN_HAND) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                NetworkHandler.sendToPlayer(
+                        new OpenDialoguePacket("greeting", this.getId()),
+                        serverPlayer
+                );
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        return super.mobInteract(player, hand);
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        playMood("sad", 1);
+        return super.hurt(source, amount);
+    }
 
 
-	@Override
-	public void onAddedToLevel() {
-		playDialogueAnimation("spawn");
-		super.onAddedToLevel();
-	}
+    @Override
+    public void onAddedToLevel() {
+        playDialogueAnimation("spawn");
+        super.onAddedToLevel();
+    }
 
-	//region Brain stuff
-	@Override
-	protected Brain.@NotNull Provider<RobotEntity> brainProvider() {
-		return new SmartBrainProvider<>(this);
-	}
-	
-	@Override
-	public void customServerAiStep() {
-		this.level().getProfiler().push("robotBrain");
-		this.tickBrain(this);
-		this.level().getProfiler().popPush("robotFSM");
-		this.tickActionStateMachine();
-		this.level().getProfiler().popPush("robotEnergy");
-		this.energy.tick();
-		this.level().getProfiler().pop();
-		super.customServerAiStep();
-	}
-	
-	private void tickActionStateMachine() {
-		if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-			ActionContext context = ActionContext.builder()
-				.robot(this)
-				.level(serverLevel)
-				.gameTime(serverLevel.getGameTime())
-				.miningTask(getCurrentMiningTask())
-				.miningPlan(getCurrentMiningPlan())
-				.currentTarget(null)
-				.ticksInState(0)
-				.needsTool(!(this.getMainHandItem().getItem() instanceof net.minecraft.world.item.DiggerItem))
-				.build();
-				
-			this.actionStateMachine.setContext(context);
-			this.actionStateMachine.tick(this);
-		}
-	}
-	
-	private MiningTaskData getCurrentMiningTask() {
-		return this.getBrain()
-			.getMemory(ModMemoryModuleTypes.CURRENT_TASK.get())
-			.filter(MiningTaskData.class::isInstance)
-			.map(MiningTaskData.class::cast)
-			.orElse(null);
-	}
-	
-	private MiningPathPlan getCurrentMiningPlan() {
-		return this.getBrain()
-			.getMemory(ModMemoryModuleTypes.MINING_PLAN.get())
-			.filter(MiningPathPlan.class::isInstance)
-			.map(MiningPathPlan.class::cast)
-			.orElse(null);
-	}
-	
-	@Override
-	protected void sendDebugPackets() {
-		DebugPackets.sendEntityBrain(this);
-		super.sendDebugPackets();
-	}
-	//endregion
-	
-	//region Navigation
-	@Override
-	protected @NotNull PathNavigation createNavigation(Level level) {
-		FlyingPathNavigation flyingpathnavigation = new FlyingPathNavigation(this, level);
-		flyingpathnavigation.setCanOpenDoors(false);
-		flyingpathnavigation.setCanFloat(true);
-		flyingpathnavigation.setCanPassDoors(true);
-		return flyingpathnavigation;
-	}
-	
-	@Override
-	public void travel(Vec3 travelVector) {
-		if (this.isControlledByLocalInstance()) {
-			if (this.isInWater()) {
-				this.moveRelative(0.02F, travelVector);
-				this.move(MoverType.SELF, this.getDeltaMovement());
-				this.setDeltaMovement(this.getDeltaMovement().scale(0.8F));
-			} else if (this.isInLava()) {
-				this.moveRelative(0.02F, travelVector);
-				this.move(MoverType.SELF, this.getDeltaMovement());
-				this.setDeltaMovement(this.getDeltaMovement().scale(0.5));
-			} else {
-				this.moveRelative(this.getSpeed(), travelVector);
-				this.move(MoverType.SELF, this.getDeltaMovement());
-				this.setDeltaMovement(this.getDeltaMovement().scale(0.91F));
-			}
-		}
-		
-		this.calculateEntityAnimation(false);
-	}
-	
-	@Override
-	protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) { }
-	//endregion
-	
-	//region Inventory
-	@Override
-	protected void dropEquipment() {
-		this.inventory.removeAllItems().forEach(this::spawnAtLocation);
-		ItemStack stack = this.getItemBySlot(EquipmentSlot.MAINHAND);
-		if (!stack.isEmpty() && !EnchantmentHelper.has(stack, EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP)) {
-			this.spawnAtLocation(stack);
-			this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-		}
-	}
+    //region Brain stuff
+    @Override
+    protected Brain.@NotNull Provider<RobotEntity> brainProvider() {
+        return new SmartBrainProvider<>(this);
+    }
 
-	public ItemStack getItemInMainHand() {
-		return this.getItemBySlot(EquipmentSlot.MAINHAND);
-	}
+    @Override
+    public void customServerAiStep() {
+        this.level().getProfiler().push("robotBrain");
+        this.tickBrain(this);
+        this.level().getProfiler().popPush("robotFSM");
+        this.tickActionStateMachine();
+        this.level().getProfiler().popPush("robotEnergy");
+        this.energy.tick();
+        this.level().getProfiler().pop();
+        super.customServerAiStep();
+    }
 
-	@Override
-	public @NotNull SimpleContainer getInventory() {
-		return this.inventory;
-	}
-	//endregion
-	
-	//region Owner
-	public boolean hasOwner() {
-		return this.getBrain().hasMemoryValue(MemoryModuleType.LIKED_PLAYER);
-	}
-	
-	public boolean isOwnedBy(Player player) {
-		return this.getBrain().getMemory(MemoryModuleType.LIKED_PLAYER)
-			       .map(uuid -> uuid.equals(player.getUUID())).orElse(false);
-	}
-	
-	@Nullable
-	public Player getOwner() {
-		return this.getBrain().getMemory(MemoryModuleType.LIKED_PLAYER)
-			.map(uuid -> this.level().getPlayerByUUID(uuid)).orElse(null);
-	}
-	
-	public void setOwner(@Nullable Player owner) {
-		this.setOwner(owner == null ? null : owner.getUUID());
-	}
-	
-	public void setOwner(@Nullable UUID owner) {
-		if (owner == null) {
-			this.getBrain().eraseMemory(MemoryModuleType.LIKED_PLAYER);
-			return;
-		}
-		this.getBrain().setMemory(MemoryModuleType.LIKED_PLAYER, owner);
-	}
-	//endregion
-	
-	//region GeoEntity
-	@Override
-	public AnimatableInstanceCache getAnimatableInstanceCache() {
-		return this.cache;
-	}
+    private void tickActionStateMachine() {
+        if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            ActionContext context = ActionContext.builder()
+                    .robot(this)
+                    .level(serverLevel)
+                    .gameTime(serverLevel.getGameTime())
+                    .miningTask(getCurrentMiningTask())
+                    .miningPlan(getCurrentMiningPlan())
+                    .currentTarget(null)
+                    .ticksInState(0)
+                    .needsTool(!(this.getMainHandItem().getItem() instanceof net.minecraft.world.item.DiggerItem))
+                    .build();
 
-	@Override
-	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-		controllers.add(new AnimationController<>(this, "controller", 0, this::predicate));
-		
-		AnimationController<RobotEntity> dialogueController = new AnimationController<>(this, "dialogue_controller", 0, this::dialogueAnimController);
-		dialogueController.triggerableAnim("sad", RawAnimation.begin().thenPlay("animation.sad"));
-		dialogueController.triggerableAnim("happy", RawAnimation.begin().thenPlay("animation.happy"));
-		dialogueController.triggerableAnim("wave", RawAnimation.begin().thenPlay("animation.wave"));
-		dialogueController.triggerableAnim("use-tool", RawAnimation.begin().thenPlay("animation.use-tool"));
-		dialogueController.triggerableAnim("spawn", RawAnimation.begin().thenPlay("animation.spawn"));
-		
-		controllers.add(dialogueController);
-	}
-	
-	private <E extends GeoAnimatable> PlayState dialogueAnimController(AnimationState<E> state) {
-		if (currentDialogueAnimation != null) {
-			state.getController().setAnimation(RawAnimation.begin().thenPlay(currentDialogueAnimation));
-			
-			if (state.getController().hasAnimationFinished()) {
-				currentDialogueAnimation = null;
-				state.getController().forceAnimationReset();
-			}
-			
-			return PlayState.CONTINUE;
-		}
-		return PlayState.STOP;
-	}
-	
-	private <E extends GeoAnimatable> PlayState predicate(AnimationState<E> event) {
-		if (currentDialogueAnimation != null) {
-			return PlayState.STOP;
-		}
-		
-		if (event.getController().getAnimationState().equals(AnimationController.State.STOPPED)) {
-			RawAnimation rawAnimation = RawAnimation.begin().thenLoop("animation.idle");
-			event.getController().setAnimation(rawAnimation);
-		}
-		
-		return PlayState.CONTINUE;
-	}
+            this.actionStateMachine.setContext(context);
+            this.actionStateMachine.tick(this);
+        }
+    }
 
-	@Override
-	public void playDialogueAnimation(String animationName) {
-		this.currentDialogueAnimation = animationName;
-		triggerAnim("dialogue_controller", currentDialogueAnimation);
-	}
+    private MiningTaskData getCurrentMiningTask() {
+        return this.getBrain()
+                .getMemory(ModMemoryModuleTypes.CURRENT_TASK.get())
+                .filter(MiningTaskData.class::isInstance)
+                .map(MiningTaskData.class::cast)
+                .orElse(null);
+    }
 
-	public void playMood(@Nullable String mood, int sec) {
-		this.currentMood = mood;
-		this.lastMoodTick = this.tickCount + (sec * 20);
-	}
-	//endregion
-	
-	//region SaveData
-	@Override
-	public void addAdditionalSaveData(CompoundTag tag) {
-		super.addAdditionalSaveData(tag);
-		tag.put("energy", this.energy.saveToNBT());
-		
-		this.brain.getMemory(MemoryModuleType.LIKED_PLAYER)
-			.ifPresent(uuid -> tag.putUUID("owner", uuid));
-		
-		this.brain.getMemory(ModMemoryModuleTypes.CURRENT_TASK.get())
-			.ifPresent(data -> tag.put("current_task", TaskData.DISPATCH_CODEC.encodeStart(NbtOps.INSTANCE, data).getOrThrow()));
-	}
-	
-	@Override
-	public void readAdditionalSaveData(CompoundTag tag) {
-		super.readAdditionalSaveData(tag);
-		this.energy.loadFromNBT(tag.getCompound("energy"));
-		
-		if (tag.hasUUID("owner")) {
-			this.setOwner(tag.getUUID("owner"));
-		}
-		if (tag.contains("current_task")) {
-			TaskData.DISPATCH_CODEC.parse(NbtOps.INSTANCE, tag.getCompound("current_task"))
-				.resultOrPartial(Util.prefix("RobotEntity", System.err::println))
-				.ifPresent(data -> this.brain.setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), data));
-		}
-	}
-	//endregion
+    private MiningPathPlan getCurrentMiningPlan() {
+        return this.getBrain()
+                .getMemory(ModMemoryModuleTypes.MINING_PLAN.get())
+                .filter(MiningPathPlan.class::isInstance)
+                .map(MiningPathPlan.class::cast)
+                .orElse(null);
+    }
+
+    @Override
+    protected void sendDebugPackets() {
+        DebugPackets.sendEntityBrain(this);
+        super.sendDebugPackets();
+    }
+    //endregion
+
+    //region Navigation
+    @Override
+    protected @NotNull PathNavigation createNavigation(Level level) {
+        FlyingPathNavigation flyingpathnavigation = new FlyingPathNavigation(this, level);
+        flyingpathnavigation.setCanOpenDoors(false);
+        flyingpathnavigation.setCanFloat(true);
+        flyingpathnavigation.setCanPassDoors(true);
+        return flyingpathnavigation;
+    }
+
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (this.isControlledByLocalInstance()) {
+            if (this.isInWater()) {
+                this.moveRelative(0.02F, travelVector);
+                this.move(MoverType.SELF, this.getDeltaMovement());
+                this.setDeltaMovement(this.getDeltaMovement().scale(0.8F));
+            } else if (this.isInLava()) {
+                this.moveRelative(0.02F, travelVector);
+                this.move(MoverType.SELF, this.getDeltaMovement());
+                this.setDeltaMovement(this.getDeltaMovement().scale(0.5));
+            } else {
+                this.moveRelative(this.getSpeed(), travelVector);
+                this.move(MoverType.SELF, this.getDeltaMovement());
+                this.setDeltaMovement(this.getDeltaMovement().scale(0.91F));
+            }
+        }
+
+        this.calculateEntityAnimation(false);
+    }
+
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+    }
+    //endregion
+
+    //region Inventory
+    @Override
+    protected void dropEquipment() {
+        this.inventory.removeAllItems().forEach(this::spawnAtLocation);
+        ItemStack stack = this.getItemBySlot(EquipmentSlot.MAINHAND);
+        if (!stack.isEmpty() && !EnchantmentHelper.has(stack, EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP)) {
+            this.spawnAtLocation(stack);
+            this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        }
+    }
+
+    public ItemStack getItemInMainHand() {
+        return this.getItemBySlot(EquipmentSlot.MAINHAND);
+    }
+
+    @Override
+    public @NotNull SimpleContainer getInventory() {
+        return this.inventory;
+    }
+    //endregion
+
+    //region Owner
+    public boolean hasOwner() {
+        return this.getBrain().hasMemoryValue(MemoryModuleType.LIKED_PLAYER);
+    }
+
+    public boolean isOwnedBy(Player player) {
+        return this.getBrain().getMemory(MemoryModuleType.LIKED_PLAYER)
+                .map(uuid -> uuid.equals(player.getUUID())).orElse(false);
+    }
+
+    @Nullable
+    public Player getOwner() {
+        return this.getBrain().getMemory(MemoryModuleType.LIKED_PLAYER)
+                .map(uuid -> this.level().getPlayerByUUID(uuid)).orElse(null);
+    }
+
+    public void setOwner(@Nullable Player owner) {
+        this.setOwner(owner == null ? null : owner.getUUID());
+    }
+
+    public void setOwner(@Nullable UUID owner) {
+        if (owner == null) {
+            this.getBrain().eraseMemory(MemoryModuleType.LIKED_PLAYER);
+            return;
+        }
+        this.getBrain().setMemory(MemoryModuleType.LIKED_PLAYER, owner);
+    }
+    //endregion
+
+    //region GeoEntity
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return this.cache;
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "controller", 0, this::predicate));
+
+        AnimationController<RobotEntity> dialogueController = new AnimationController<>(this, "dialogue_controller", 0, this::dialogueAnimController);
+        dialogueController.triggerableAnim("sad", RawAnimation.begin().thenPlay("animation.sad"));
+        dialogueController.triggerableAnim("happy", RawAnimation.begin().thenPlay("animation.happy"));
+        dialogueController.triggerableAnim("wave", RawAnimation.begin().thenPlay("animation.wave"));
+        dialogueController.triggerableAnim("use-tool", RawAnimation.begin().thenPlay("animation.use-tool"));
+        dialogueController.triggerableAnim("spawn", RawAnimation.begin().thenPlay("animation.spawn"));
+
+        controllers.add(dialogueController);
+    }
+
+    private <E extends GeoAnimatable> PlayState dialogueAnimController(AnimationState<E> state) {
+        if (currentDialogueAnimation != null) {
+            state.getController().setAnimation(RawAnimation.begin().thenPlay(currentDialogueAnimation));
+
+            if (state.getController().hasAnimationFinished()) {
+                currentDialogueAnimation = null;
+                state.getController().forceAnimationReset();
+            }
+
+            return PlayState.CONTINUE;
+        }
+        return PlayState.STOP;
+    }
+
+    private <E extends GeoAnimatable> PlayState predicate(AnimationState<E> event) {
+        if (currentDialogueAnimation != null) {
+            return PlayState.STOP;
+        }
+
+        if (event.getController().getAnimationState().equals(AnimationController.State.STOPPED)) {
+            RawAnimation rawAnimation = RawAnimation.begin().thenLoop("animation.idle");
+            event.getController().setAnimation(rawAnimation);
+        }
+
+        return PlayState.CONTINUE;
+    }
+
+    @Override
+    public void playDialogueAnimation(String animationName) {
+        this.currentDialogueAnimation = animationName;
+        triggerAnim("dialogue_controller", currentDialogueAnimation);
+    }
+
+    public void playMood(@Nullable String mood, int sec) {
+        this.currentMood = mood;
+        this.lastMoodTick = this.tickCount + (sec * 20);
+    }
+    //endregion
+
+    //region SaveData
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.put("energy", this.energy.saveToNBT());
+
+        this.brain.getMemory(MemoryModuleType.LIKED_PLAYER)
+                .ifPresent(uuid -> tag.putUUID("owner", uuid));
+
+        this.brain.getMemory(ModMemoryModuleTypes.CURRENT_TASK.get())
+                .ifPresent(data -> tag.put("current_task", TaskData.DISPATCH_CODEC.encodeStart(NbtOps.INSTANCE, data).getOrThrow()));
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.energy.loadFromNBT(tag.getCompound("energy"));
+
+        if (tag.hasUUID("owner")) {
+            this.setOwner(tag.getUUID("owner"));
+        }
+        if (tag.contains("current_task")) {
+            TaskData.DISPATCH_CODEC.parse(NbtOps.INSTANCE, tag.getCompound("current_task"))
+                    .resultOrPartial(Util.prefix("RobotEntity", System.err::println))
+                    .ifPresent(data -> this.brain.setMemory(ModMemoryModuleTypes.CURRENT_TASK.get(), data));
+        }
+    }
+    //endregion
 }

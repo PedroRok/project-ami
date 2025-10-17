@@ -1,22 +1,17 @@
 package com.pedrorok.ami.client.gui;
 
-import com.mojang.datafixers.kinds.IdF;
-import com.pedrorok.ami.entities.robot.IHaveEnergy;
-import com.pedrorok.ami.entities.robot.RobotEnergy;
 import com.pedrorok.ami.registry.ModSounds;
-import com.pedrorok.ami.system.dialog.DialogueNode;
+import com.pedrorok.ami.system.dialog.nodes.DialogueNode;
 import com.pedrorok.ami.system.dialog.actions.DialogueAction;
 import com.pedrorok.ami.system.dialog.actions.WaitAction;
+import com.pedrorok.ami.system.dialog.nodes.NodeOption;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,15 +29,10 @@ public class DialogueScreen extends Screen {
     private final int charsPerTick = 1;
 
     private boolean textComplete = false;
-    private Button option1Button;
-    private Button option2Button;
-    private Button option3Button;
+    private List<Button> buttons = new ArrayList<>();
 
-    private final String option1Text;
-    private final String option2Text;
-    private final String option3Text;
+    private final List<NodeOption> options;
 
-    private final DialogueCallback callback;
     private final LivingEntity entity;
     private boolean isTransitioning = false;
     public boolean hasActionsExecuting = false;
@@ -55,31 +45,20 @@ public class DialogueScreen extends Screen {
     public boolean waitingForAction = false;
     public WaitAction currentWaitAction = null;
 
-    public DialogueScreen(String dialogueText, String opt1, String opt2, String opt3, DialogueCallback callback, LivingEntity entity) {
+    public DialogueScreen(String dialogueText, List<NodeOption> options, LivingEntity entity) {
         super(Component.literal("Dialogue"));
         this.fullText = dialogueText;
-        this.option1Text = opt1;
-        this.option2Text = opt2;
-        this.option3Text = opt3;
-        this.callback = callback;
+        this.options = options;
         this.entity = entity;
     }
-
-    public DialogueScreen(String dialogueText, String opt1, String opt2, String opt3, DialogueCallback callback) {
-        this(dialogueText, opt1, opt2, opt3, callback, null);
-    }
-
     /**
      * Construtor para usar com sistema sequencial de texto
      */
-    public DialogueScreen(java.util.List<com.pedrorok.ami.system.dialog.DialogueNode.TextSegment> segments, String opt1, String opt2, String opt3, DialogueCallback callback, LivingEntity entity) {
+    public DialogueScreen(List<DialogueNode.TextSegment> segments, List<NodeOption> options, LivingEntity entity) {
         super(Component.literal("Dialogue"));
         this.textSegments = segments;
-        this.fullText = ""; // Será construído dinamicamente
-        this.option1Text = opt1;
-        this.option2Text = opt2;
-        this.option3Text = opt3;
-        this.callback = callback;
+        this.fullText = "";
+        this.options = options;
         this.entity = entity;
     }
 
@@ -93,41 +72,18 @@ public class DialogueScreen extends Screen {
         int centerX = this.width / 2;
         int buttonY = this.height / 2 + 45;
 
-        this.option1Button = Button.builder(Component.literal(option1Text), button -> {
-            if (!isTransitioning && callback != null) {
-                isTransitioning = true;
-                callback.onOptionSelected(1);
-                return;
-            }
-            this.onClose();
-        }).bounds(centerX - buttonWidth / 2, buttonY, buttonWidth, buttonHeight).build();
-
-        this.option2Button = Button.builder(Component.literal(option2Text), button -> {
-            if (!isTransitioning && callback != null) {
-                isTransitioning = true;
-                callback.onOptionSelected(2);
-                return;
-            }
-            this.onClose();
-        }).bounds(centerX - buttonWidth / 2, buttonY + 25, buttonWidth, buttonHeight).build();
-
-        this.option3Button = Button.builder(Component.literal(option3Text), button -> {
-            if (!isTransitioning && callback != null) {
-                isTransitioning = true;
-                callback.onOptionSelected(3);
-                return;
-            }
-            this.onClose();
-        }).bounds(centerX - buttonWidth / 2, buttonY + 50, buttonWidth, buttonHeight).build();
-
-        // Botões começam invisíveis
-        this.option1Button.visible = false;
-        this.option2Button.visible = false;
-        this.option3Button.visible = false;
-
-        this.addRenderableWidget(option1Button);
-        this.addRenderableWidget(option2Button);
-        this.addRenderableWidget(option3Button);
+        for (int i = 0; i < options.size(); i++) {
+            NodeOption option = options.get(i);
+            Button button = Button.builder(Component.literal(option.text), btn -> {
+                if (!isTransitioning) {
+                    isTransitioning = true;
+                    option.whenClicked(Minecraft.getInstance(), entity);
+                }
+            }).bounds(centerX - buttonWidth / 2, buttonY + (i * 25), buttonWidth, buttonHeight).build();
+            button.visible = false;
+            this.buttons.add(button);
+            this.addRenderableWidget(button);
+        }
     }
 
     @Override
@@ -219,9 +175,9 @@ public class DialogueScreen extends Screen {
      * Mostra os botões de opção
      */
     private void showButtons() {
-        option1Button.visible = true;
-        option2Button.visible = true;
-        option3Button.visible = true;
+        for (Button button : buttons) {
+            button.visible = true;
+        }
     }
 
 
@@ -342,9 +298,7 @@ public class DialogueScreen extends Screen {
             textIndex = currentText.length();
 
             textComplete = true;
-            option1Button.visible = true;
-            option2Button.visible = true;
-            option3Button.visible = true;
+            showButtons();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);

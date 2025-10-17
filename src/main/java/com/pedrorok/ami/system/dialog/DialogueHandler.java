@@ -1,12 +1,16 @@
 package com.pedrorok.ami.system.dialog;
 
-import com.pedrorok.ami.ProjectAmi;
 import com.pedrorok.ami.client.gui.DialogueScreen;
+import com.pedrorok.ami.system.dialog.nodes.CloseNodeOption;
+import com.pedrorok.ami.system.dialog.nodes.DialogueNode;
+import com.pedrorok.ami.system.dialog.nodes.NodeOption;
+import com.pedrorok.ami.system.dialog.nodes.SimpleNodeOption;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -28,56 +32,35 @@ public class DialogueHandler {
         return INSTANCE;
     }
 
-    private void registerDialogues() {
+    public void registerDialogues() {
         DialogueNode greeting = new DialogueNode(
-                "<anim_happy><mood_happy_3>Hello <player>!<wait_2><br>My name is AMI<br><wait_2>I’m a friendly robot here to help you.<br>How can I assist you today?",
-                "Can you do something for me?",
-                "What can you do?",
-                "Exit"
+                "<anim_happy><mood_happy_3>Hello <player>!<wait_2><br>My name is AMI<br><wait_2>I’m a friendly robot here to help you.<wait_1><br>How can I assist you today?",
+                new SimpleNodeOption("Can you do something for me?", "action-selection"),
+                new SimpleNodeOption("What can you do?", "info1"),
+                new CloseNodeOption("Nothing for now, thanks!")
         );
 
-        DialogueNode shopItems = new DialogueNode(
-                "<anim_happy>I’ve got lots of interesting things here!<br>What would you like to do?",
-                "See mining tools",
-                "See building materials",
-                "Back"
+        DialogueNode actionSelection = new DialogueNode(
+                "<anim_neutral><mood_neutral_1>Sure!<wait_1><br>What do you need help with?",
+                new SimpleNodeOption("I need help with mining.", "mining-info"),
+                new CloseNodeOption("Actually, never mind.")
         );
 
-        DialogueNode question = new DialogueNode(
-                "<anim_happy>Of course! Ask whatever you’d like.<br><wait_1>I’ve been here for many years and know this place very well.",
-                "Where are you from?",
-                "What do you know about this area?",
-                "Back"
+        DialogueNode miningInfo = new DialogueNode(
+                "<anim_happy><mood_happy_2>Great!<wait_1><br>I can assist you with mining tasks.<wait_1><br>Just tell me what to mine and where to start.",
+                new CloseNodeOption("Thanks, AMI!")
         );
 
-        DialogueNode tools = new DialogueNode(
-                "<anim_happy>Mining tools!<br>I have pickaxes and other useful tools.",
-                "Buy iron pickaxe",
-                "Buy diamond pickaxe",
-                "Back"
+        DialogueNode info1 = new DialogueNode(
+                "<anim_neutral><mood_neutral_1>I can help you with various tasks like mining, building, and gathering resources.<wait_1><br>Just let me know what you need!",
+                new SimpleNodeOption("Can you do something for me?", "action-selection"),
+                new CloseNodeOption("Thanks for the info!")
         );
 
-        DialogueNode materials = new DialogueNode(
-                "<anim_wave>Building materials!<br>Blocks, bricks, and much more.",
-                "See building blocks",
-                "See decorative materials",
-                "Back"
-        );
-
-
-        // Conecta os nós do diálogo
-        greeting.setOptionCallback(1, question);
-        greeting.setOptionCallback(2, shopItems);
-        greeting.setOptionCallback(3, null);
-
-        shopItems.setOptionCallback(1, tools);
-        shopItems.setOptionCallback(2, materials);
-        shopItems.setOptionCallback(3, greeting);
-
-        question.setOptionCallback(3, greeting);
-        tools.setOptionCallback(3, shopItems);
-        materials.setOptionCallback(3, shopItems);
-
+        // Register dialogues
+        dialogues.put("mining-info", miningInfo);
+        dialogues.put("info1", info1);
+        dialogues.put("action-selection", actionSelection);
         dialogues.put("greeting", greeting);
     }
 
@@ -101,20 +84,11 @@ public class DialogueHandler {
         Minecraft mc = Minecraft.getInstance();
         
         if (mc.player != null) {
-            java.util.List<DialogueNode.TextSegment> segments = node.processTextSequentially(mc.player, currentEntity);
+            List<DialogueNode.TextSegment> segments = node.processTextSequentially(mc.player, currentEntity);
 
             DialogueScreen screen = new DialogueScreen(
                     segments,
-                    node.option1,
-                    node.option2,
-                    node.option3,
-                    (selectedOption) -> {
-                        DialogueNode nextNode = node.getNextNode(selectedOption);
-
-                        if (nextNode != null) {
-                            mc.execute(() -> showDialogueNode(nextNode));
-                        }
-                    },
+                    node.getOptions(),
                     currentEntity
             );
 

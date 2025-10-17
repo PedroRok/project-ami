@@ -4,6 +4,10 @@ import com.pedrorok.ami.entities.robot.RobotEntity;
 import com.pedrorok.ami.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -122,10 +126,16 @@ public class RobotPartsBlock extends Block {
                 default -> state;
             };
             ctx.getLevel().setBlock(ctx.getClickedPos(), newState, 3);
+            ctx.getLevel().playSound(
+                    null,
+                    ctx.getClickedPos(),
+                    SoundType.LANTERN.getPlaceSound(),
+                    SoundSource.BLOCKS,
+                    0.6F,
+                    1.0F / (ctx.getLevel().getRandom().nextFloat() * 0.4F + 0.8F)
+            );
             return InteractionResult.SUCCESS;
         }
-        ctx.getLevel().playSound(ctx.getPlayer(), ctx.getClickedPos(), SoundType.LANTERN.getPlaceSound(), ctx.getPlayer().getSoundSource(), 0.6F, 1.0F / (ctx.getLevel().getRandom().nextFloat() * 0.4F + 0.8F));
-
 
         return InteractionResult.PASS;
     }
@@ -143,6 +153,8 @@ public class RobotPartsBlock extends Block {
         level.addFreshEntity(robot);
         robot.setOwner(player);
         robot.setYRot(90);
+        level.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.5F, 2.0F);
+        level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_IRON.value(), SoundSource.BLOCKS, 0.5F, 2.0F);
     }
 
     @Override
@@ -152,8 +164,6 @@ public class RobotPartsBlock extends Block {
     }
     //endregion
 
-
-
     //shape region
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
@@ -162,7 +172,6 @@ public class RobotPartsBlock extends Block {
         if (state.getValue(HEAD)) shape = Shapes.or(shape, HEAD_SHAPE);
         if (state.getValue(LEFT_ARM)) shape = Shapes.or(shape, LEFT_ARM_SHAPE);
         if (state.getValue(RIGHT_ARM)) shape = Shapes.or(shape, RIGHT_ARM_SHAPE);
-        //if (state.getValue(REACTOR)) shape = Shapes.or(shape, REACTOR_SHAPE);
 
         return rotateShape(shape, state.getValue(FACING));
     }

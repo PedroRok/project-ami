@@ -1,6 +1,9 @@
-package com.pedrorok.ami.system.dialog;
+package com.pedrorok.ami.system.dialog.nodes;
 
+import com.pedrorok.ami.ProjectAmi;
+import com.pedrorok.ami.system.dialog.DialogueActionRegistry;
 import com.pedrorok.ami.system.dialog.actions.DialogueAction;
+import lombok.Getter;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
@@ -17,13 +20,8 @@ public class DialogueNode {
     protected String text;
     protected String processedText;
     protected List<DialogueAction> actions;
-    protected String option1;
-    protected String option2;
-    protected String option3;
-
-    private DialogueNode nextNode1;
-    private DialogueNode nextNode2;
-    private DialogueNode nextNode3;
+    @Getter
+    protected List<NodeOption> options;
 
     /**
      * Processa o texto de forma sequencial, criando uma lista de segmentos com ações
@@ -103,11 +101,15 @@ public class DialogueNode {
         }
     }
 
-    public DialogueNode(String text, String option1, String option2, String option3) {
+    public DialogueNode(String text, NodeOption... options) {
         this.text = text;
-        this.option1 = option1;
-        this.option2 = option2;
-        this.option3 = option3;
+        this.options = List.of(options);
+        if (this.options.isEmpty()) {
+            ProjectAmi.LOGGER.warn("DialogueNode created without options! Text: {}", text);
+        }
+        if (this.options.size() > 3) {
+            ProjectAmi.LOGGER.warn("DialogueNode created with more than 3 options! Only the first 3 will be used. Text: {}", text);
+        }
         this.processedText = text; // Texto processado inicia igual ao original
     }
 
@@ -116,22 +118,5 @@ public class DialogueNode {
      */
     public String getProcessedText() {
         return processedText != null ? processedText : text;
-    }
-
-    public void setOptionCallback(int optionNumber, DialogueNode nextNode) {
-        switch (optionNumber) {
-            case 1 -> this.nextNode1 = nextNode;
-            case 2 -> this.nextNode2 = nextNode;
-            case 3 -> this.nextNode3 = nextNode;
-        }
-    }
-
-    public DialogueNode getNextNode(int optionNumber) {
-        return switch (optionNumber) {
-            case 1 -> nextNode1;
-            case 2 -> nextNode2;
-            case 3 -> nextNode3;
-            default -> null;
-        };
     }
 }
